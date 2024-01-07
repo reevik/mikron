@@ -18,6 +18,7 @@ package net.reevik.mikron;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +27,9 @@ public class DependencyScanTest {
   @Test
   void testScanClasses() {
     ClasspathResource dependencyScan = ClasspathResource.of("");
-    List<Class<?>> by = dependencyScan.findBy(Managed.class);
-    assertThat(by).containsOnly(AnnotatedTestClass.class);
+    List<AnnotationResource<Managed>> by = dependencyScan.findBy(Managed.class);
+    assertThat(by).hasSize(1);
+    AnnotationResource<Managed> managedAnnotationResource = by.get(0);
+    assertThat(managedAnnotationResource.clazz()).isEqualTo(AnnotatedTestClass.class);
   }
 }

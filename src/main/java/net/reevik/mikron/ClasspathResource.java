@@ -26,6 +26,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
 
 public class ClasspathResource {
@@ -123,12 +124,12 @@ public class ClasspathResource {
     findBy(Managed.class);
   }
 
-  public <T extends Annotation> List<Class<?>> findBy(Class<T> annotation) {
-    List<Class<?>> results = new ArrayList<>();
+  public <T extends Annotation> List<AnnotationResource<T>> findBy(Class<T> annotation) {
+    List<AnnotationResource<T>> results = new ArrayList<>();
     for (final Class<?> clazz : repo) {
       T annotationOnClass = clazz.getAnnotation(annotation);
       if (annotationOnClass != null) {
-        results.add(clazz);
+        results.add(new AnnotationResource<>(annotationOnClass, clazz));
       }
     }
     return results;
