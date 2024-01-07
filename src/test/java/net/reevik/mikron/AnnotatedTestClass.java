@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Erhan Bagdemir. All rights reserved.
+ * Copyright (c) 2024 Erhan Bagdemir. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,8 @@
  */
 package net.reevik.mikron;
 
-import java.io.IOException;
-import java.util.Optional;
+import net.reevik.mikron.annotation.Managed;
 
-public class DependencyScanImpl {
-
-  public static final String DEFAULT_BASE_PKG = "/";
-
-  public void scan(String packageName) {
-    String baseDir = Optional.ofNullable(packageName)
-        .map(p -> p.replace(".", "/"))
-        .orElse(DEFAULT_BASE_PKG);
-    ClassLoader classLoader = getClass().getClassLoader();
-    try {
-      classLoader.getResources(baseDir);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
+@Managed
+public class AnnotatedTestClass {
 }
