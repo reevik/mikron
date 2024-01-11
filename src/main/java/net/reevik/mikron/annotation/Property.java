@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Erhan Bagdemir. All rights reserved.
+ * Copyright (c) 2024 Erhan Bagdemir. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Managed {
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Property {
 
-  String name() default "";
 }

@@ -15,24 +15,21 @@
  */
 package net.reevik.mikron;
 
-import net.reevik.mikron.annotation.Managed;
-import net.reevik.mikron.annotation.Property;
-import net.reevik.mikron.annotation.Wire;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Managed
-public class AnnotatedTestClass {
+import java.util.Optional;
+import net.reevik.mikron.ioc.MikronContext;
+import org.junit.jupiter.api.Test;
 
-  @Wire
-  private AnnotatedDependencyTestClass annotatedDependencyTestClass;
+public class MikronContextTest {
 
-  @Property
-  private String field;
-
-  public String getField() {
-    return field;
-  }
-
-  public AnnotatedDependencyTestClass getAnnotatedDependencyTestClass() {
-    return annotatedDependencyTestClass;
+  @Test
+  void testWiring() {
+    MikronContext context = MikronContext.init(DependencyScanTest.class);
+    Optional<AnnotatedTestClass> instance = context.getInstance(
+        AnnotatedTestClass.class.getName());
+    assertThat(instance).isPresent();
+    AnnotatedTestClass annotatedTest = instance.get();
+    assertThat(annotatedTest.getAnnotatedDependencyTestClass()).isNotNull();
   }
 }

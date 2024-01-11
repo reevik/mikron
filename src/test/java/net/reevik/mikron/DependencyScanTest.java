@@ -18,18 +18,30 @@ package net.reevik.mikron;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import net.reevik.mikron.ioc.MikronContext;
+import net.reevik.mikron.ioc.MikronContext.ManagedInstance;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.reflection.ClasspathResourceImpl;
 import org.junit.jupiter.api.Test;
 
 public class DependencyScanTest {
 
   @Test
   void testScanClasses() {
-    ClasspathResource dependencyScan = ClasspathResource.of("");
-    List<AnnotationResource<Managed>> by = dependencyScan.findBy(Managed.class);
-    assertThat(by).hasSize(1);
-    AnnotationResource<Managed> managedAnnotationResource = by.get(0);
-    assertThat(managedAnnotationResource.clazz()).isEqualTo(AnnotatedTestClass.class);
+    ClasspathResourceImpl dependencyScan = ClasspathResourceImpl.of("");
+    List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
+    assertThat(by).hasSize(2);
+  }
+
+  @Test
+  void testMikronContext() {
+    MikronContext context = MikronContext.init(DependencyScanTest.class);
+    Map<String, ManagedInstance> managedInstances = context.getInstanceCache();
+    assertThat(managedInstances).hasSize(2);
+    Optional<ManagedInstance> first = managedInstances.values().stream().findFirst();
+    assertThat(first.get().instance()).isInstanceOf(AnnotatedTestClass.class);
   }
 }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron;
+package net.reevik.mikron.reflection;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,19 +28,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
-import net.reevik.mikron.annotation.Managed;
 
-public class ClasspathResource {
-
+public class ClasspathResourceImpl {
   public static final String DEFAULT_BASE_PKG = "/";
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
-  public static ClasspathResource of(String packageName) {
-    return new ClasspathResource(packageName);
+  public static ClasspathResourceImpl of(String packageName) {
+    return new ClasspathResourceImpl(packageName);
   }
 
-  private ClasspathResource(String packageName) {
+  private ClasspathResourceImpl(String packageName) {
     scan(packageName);
   }
 
@@ -120,11 +119,14 @@ public class ClasspathResource {
     return parent.getName().endsWith(".class");
   }
 
-  private void test() {
-    findBy(Managed.class);
-  }
-
-  public <T extends Annotation> List<AnnotationResource<T>> findBy(Class<T> annotation) {
+  /**
+   * Searches for annotated class instances given.
+   *
+   * @param annotation Class annotation.
+   * @param <T>        The type of annotation.
+   * @return List of {@link AnnotationResource} instances.
+   */
+  public <T extends Annotation> List<AnnotationResource<T>> findClassesBy(Class<T> annotation) {
     List<AnnotationResource<T>> results = new ArrayList<>();
     for (final Class<?> clazz : repo) {
       T annotationOnClass = clazz.getAnnotation(annotation);
@@ -135,6 +137,26 @@ public class ClasspathResource {
     return results;
   }
 
+  /**
+   * Find annotated classes with annotated fields.
+   *
+   * @param fieldAnnotation Annotation type for fields.
+   * @param classAnnotation Annotation type for classes.
+   * @param <T>             Field annotation type.
+   * @param <R>             Class annotation type.
+   * @return List of fields annotated with field annotation.
+   */
+  public <T extends Annotation, R extends Annotation> List<Field> findClassesWithFields(
+      final Class<T> fieldAnnotation,
+      final Class<R> classAnnotation) {
+    return findClassesBy(classAnnotation)
+        .stream()
+        .flatMap(m -> Arrays.stream(m.clazz().getFields())
+            .filter(field -> field.isAnnotationPresent(fieldAnnotation)))
+        .toList();
+  }
+
   record ClassFile(String packageName, String classFileName) {
+
   }
 }

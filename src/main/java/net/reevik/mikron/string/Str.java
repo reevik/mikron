@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Erhan Bagdemir. All rights reserved.
+ * Copyright (c) 2024 Erhan Bagdemir. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron.annotation;
+package net.reevik.mikron.string;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class Str {
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Managed {
+  private static final String BLANK = "";
 
-  String name() default "";
+  public static boolean isEmpty(String input) {
+    return input == null || BLANK.equals(input.trim());
+  }
 }
