@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Erhan Bagdemir. All rights reserved.
+ * Copyright (c) 2024 Erhan Bagdemir. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron.annotation;
+package net.reevik.mikron.test;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.annotation.Property;
+import net.reevik.mikron.annotation.Wire;
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface ManagedApplication {
+@Managed
+public class AnnotatedTestClass {
 
-  String[] packages();
+  @Wire
+  private AnnotatedDependencyTestClass annotatedDependencyTestClass;
+
+  @Property
+  private String field;
+
+  public String getField() {
+    return field;
+  }
+
+  public AnnotatedDependencyTestClass getAnnotatedDependencyTestClass() {
+    return annotatedDependencyTestClass;
+  }
 }

@@ -30,30 +30,40 @@ import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 
 public class ClasspathResourceImpl {
+
   public static final String DEFAULT_BASE_PKG = "/";
+  public static final String[] SCAN_ALL = new String[]{""};
+  public static final String PROTOCOL_FILE = "file";
+  public static final String PROTOCOL_JAR = "jar";
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
-  public static ClasspathResourceImpl of(String packageName) {
+  public static ClasspathResourceImpl of(String[] packageName) {
     return new ClasspathResourceImpl(packageName);
   }
 
-  private ClasspathResourceImpl(String packageName) {
+  private ClasspathResourceImpl(String[] packageName) {
     scan(packageName);
   }
 
-  private void scan(String packageName) {
-    var baseDir = Optional.ofNullable(packageName)
+  private void scan(String[] packageNames) {
+    for (final var packageName : packageNames) {
+      var baseDir = getPackageToDirectory(packageName);
+      var systemClassLoader = ClassLoader.getSystemClassLoader();
+      var contextClassLoader = Thread.currentThread().getContextClassLoader();
+      scanThroughClassLoaders(baseDir, systemClassLoader);
+      scanThroughClassLoaders(baseDir, contextClassLoader);
+    }
+  }
+
+  private String getPackageToDirectory(String packageName) {
+    return Optional.ofNullable(packageName)
         .map(p -> p.replace(".", "/"))
         .orElse(DEFAULT_BASE_PKG);
-    var systemClassLoader = ClassLoader.getSystemClassLoader();
-    var contextClassLoader = Thread.currentThread().getContextClassLoader();
-    scanThroughClassLoaders(baseDir, systemClassLoader);
-    scanThroughClassLoaders(baseDir, contextClassLoader);
   }
 
   private void scan() {
-    scan("");
+    scan(SCAN_ALL);
   }
 
   private void scanThroughClassLoaders(String baseDir, ClassLoader classLoader) {
@@ -64,27 +74,25 @@ public class ClasspathResourceImpl {
         var baseURL = iterator.next();
         var protocol = baseURL.getProtocol();
         var packageRoot = new File(baseURL.getFile());
-        if (protocol.equals("file") && packageRoot.isDirectory()) {
+        if (protocol.equals(PROTOCOL_FILE) && packageRoot.isDirectory()) {
           File[] files = packageRoot.listFiles();
           Optional.ofNullable(files).ifPresent(fs ->
               Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader)));
-        } else if (protocol.equals("jar")) {
+        } else if (protocol.equals(PROTOCOL_JAR)) {
           //TODO
           System.out.println("JAR needs to be exploded:" + baseURL);
         } else {
           throw new IllegalArgumentException("Not a valid package:" + baseURL);
         }
       }
-
-      repo.forEach(System.out::println);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  private void process(File file, String pkg, ClassLoader classLoader) {
+  private void process(File file, String baseDir, ClassLoader classLoader) {
     if (file.isFile() && isClassFile(file)) {
-      repo.add(loadClass(file, pkg, classLoader));
+      repo.add(loadClass(file, baseDir, classLoader));
       return;
     }
 
@@ -94,12 +102,12 @@ public class ClasspathResourceImpl {
       return;
     }
 
-    var newPkg = pkg.concat(file.getName().concat("."));
+    var newBaseDir = baseDir.concat(file.getName().concat("/"));
     Arrays.stream(files).forEach(child -> {
       if (child.isDirectory()) {
-        process(child, newPkg, classLoader);
+        process(child, newBaseDir, classLoader);
       } else {
-        Class<?> clazz = loadClass(child, newPkg, classLoader);
+        Class<?> clazz = loadClass(child, newBaseDir, classLoader);
         if (!repo.contains(clazz)) {
           repo.add(clazz);
         }
@@ -107,9 +115,10 @@ public class ClasspathResourceImpl {
     });
   }
 
-  private static Class<?> loadClass(File parent, String pkg, ClassLoader classLoader) {
+  private static Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
     try {
-      return classLoader.loadClass(pkg.concat(parent.getName().replace(".class", "")));
+      var normPkg = (baseDir.endsWith("/") ? baseDir : baseDir.concat("/")).replace("/", ".");
+      return classLoader.loadClass(normPkg.concat(parent.getName().replace(".class", "")));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }

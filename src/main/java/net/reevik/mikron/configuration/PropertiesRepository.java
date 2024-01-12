@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron;
+package net.reevik.mikron.configuration;
 
 import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.annotation.Wire;
+import net.reevik.mikron.ioc.MikronContext;
 
 @Managed
-public class AnnotatedDependencyTestClass {
+public class PropertiesRepository {
+
+  @Wire
+  private MikronContext mikronContext;
+
 
 }

@@ -18,9 +18,12 @@ package net.reevik.mikron;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
+import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.ioc.MikronContext;
+import net.reevik.mikron.test.AnnotatedTestClass;
 import org.junit.jupiter.api.Test;
 
+@ManagedApplication(packages = {"net.reevik.mikron.test"})
 public class MikronContextTest {
 
   @Test

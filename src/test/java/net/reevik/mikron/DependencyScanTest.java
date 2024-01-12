@@ -20,28 +20,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.ioc.MikronContext.ManagedInstance;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.reflection.ClasspathResourceImpl;
+import net.reevik.mikron.test.AnnotatedDependencyTestClass;
+import net.reevik.mikron.test.AnnotatedTestClass;
 import org.junit.jupiter.api.Test;
 
+@ManagedApplication(packages = {"net.reevik.mikron.test"})
 public class DependencyScanTest {
 
   @Test
   void testScanClasses() {
-    ClasspathResourceImpl dependencyScan = ClasspathResourceImpl.of("");
+    ClasspathResourceImpl dependencyScan = ClasspathResourceImpl.of(new String[]{""});
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(2);
+    assertThat(by).hasSize(3);
   }
 
   @Test
   void testMikronContext() {
     MikronContext context = MikronContext.init(DependencyScanTest.class);
-    Map<String, ManagedInstance> managedInstances = context.getInstanceCache();
-    assertThat(managedInstances).hasSize(2);
+    Map<String, ManagedInstance> managedInstances = context.getManagedInstances();
+    assertThat(managedInstances).hasSize(3);
     Optional<ManagedInstance> first = managedInstances.values().stream().findFirst();
-    assertThat(first.get().instance()).isInstanceOf(AnnotatedTestClass.class);
+    assertThat(first.get().instance()).isInstanceOf(AnnotatedDependencyTestClass.class);
   }
 }

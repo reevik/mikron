@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron;
+package net.reevik.mikron.test;
 
 import net.reevik.mikron.annotation.Managed;
-import net.reevik.mikron.annotation.Property;
-import net.reevik.mikron.annotation.Wire;
 
 @Managed
-public class AnnotatedTestClass {
+public class AnnotatedDependencyTestClass {
 
-  @Wire
-  private AnnotatedDependencyTestClass annotatedDependencyTestClass;
-
-  @Property
-  private String field;
-
-  public String getField() {
-    return field;
-  }
-
-  public AnnotatedDependencyTestClass getAnnotatedDependencyTestClass() {
-    return annotatedDependencyTestClass;
-  }
 }

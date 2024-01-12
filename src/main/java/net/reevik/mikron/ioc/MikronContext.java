@@ -23,33 +23,54 @@ import java.util.Map;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.annotation.Wire;
+import net.reevik.mikron.configuration.PropertiesRepository;
 import net.reevik.mikron.reflection.ClasspathResourceImpl;
 import net.reevik.mikron.string.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * Mikron context is the inversion-of-control container, which control the life-cycle of the
+ * mikron managed instances.
+ *
+ * @author Erhan Bagdemir
+ */
 public class MikronContext {
 
   private final static Logger LOG = LoggerFactory.getLogger(MikronContext.class);
 
+  /**
+   * Singleton instance of the {@link MikronContext}.
+   */
   private static MikronContext INSTANCE;
 
-  private final Map<String, ManagedInstance> instanceCache = new HashMap<>();
+  /**
+   * The cache for the managed instances.
+   */
+  private final Map<String, ManagedInstance> managedInstances = new HashMap<>();
 
-  private final ClasspathResourceImpl classpath = ClasspathResourceImpl.of("");
+  private final ClasspathResourceImpl classpath;
 
-  private MikronContext() {
+  @Wire
+  private PropertiesRepository propertiesRepository;
+
+  private MikronContext(Class<?> clazz) {
+    ManagedApplication declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
+    String[] packages = declaredAnnotation.packages();
+    classpath = ClasspathResourceImpl.of(packages);
   }
 
   public static MikronContext init(Class<?> clazz) {
     if (INSTANCE == null) {
-      INSTANCE = new MikronContext();
-      var annotationResources = INSTANCE.classpath.findClassesBy(Managed.class);
-      annotationResources.forEach(r ->
-          INSTANCE.instanceCache.put(getName(r),
-          INSTANCE.initObject(r)));
-      INSTANCE.instanceCache.values().forEach(ManagedInstance::wire);
+      INSTANCE = new MikronContext(clazz);
+      final var instances = INSTANCE.managedInstances;
+      instances.put(MikronContext.class.getName(), new ManagedInstance(null, INSTANCE));
+      final var annotationResources = INSTANCE.classpath.findClassesBy(Managed.class);
+      annotationResources.forEach(r -> instances.put(getName(r), INSTANCE.initObject(r)));
+      instances.values().forEach(ManagedInstance::wire);
     }
     return INSTANCE;
   }
@@ -73,13 +94,13 @@ public class MikronContext {
     }
   }
 
-  public Map<String, ManagedInstance> getInstanceCache() {
-    return instanceCache;
+  public Map<String, ManagedInstance> getManagedInstances() {
+    return managedInstances;
   }
 
   public <T> Optional<T> getInstance(String name) {
-    if (INSTANCE.instanceCache.containsKey(name)) {
-      ManagedInstance managedInstance = INSTANCE.instanceCache.get(name);
+    if (INSTANCE.managedInstances.containsKey(name)) {
+      ManagedInstance managedInstance = INSTANCE.managedInstances.get(name);
       return Optional.of((T) managedInstance.instance);
     }
     return Optional.empty();
@@ -89,8 +110,7 @@ public class MikronContext {
 
     public void wire() {
       Arrays.stream(instance.getClass().getDeclaredFields())
-          .filter(field -> field.isAnnotationPresent(Wire.class))
-          .forEach(this::wireField);
+          .filter(field -> field.isAnnotationPresent(Wire.class)).forEach(this::wireField);
     }
 
     private void wireField(final Field field) {
@@ -99,8 +119,8 @@ public class MikronContext {
         var key = getDependencyName(field, annotation);
 
         try {
-          if (field.trySetAccessible()) {
-            var managedInstance = INSTANCE.instanceCache.get(key);
+          if (field.trySetAccessible() && INSTANCE.managedInstances.containsKey(key)) {
+            var managedInstance = INSTANCE.managedInstances.get(key);
             field.setAccessible(true);
             field.set(instance, managedInstance.instance);
           }
