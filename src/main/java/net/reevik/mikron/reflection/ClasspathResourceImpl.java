@@ -48,12 +48,18 @@ public class ClasspathResourceImpl {
 
   private void scan(String[] packageNames) {
     for (final var packageName : packageNames) {
+      checkPackageName(packageName);
+      var recursive = packageName.endsWith(".*");
       var baseDir = getPackageToDirectory(packageName);
       var systemClassLoader = ClassLoader.getSystemClassLoader();
       var contextClassLoader = Thread.currentThread().getContextClassLoader();
-      scanThroughClassLoaders(baseDir, systemClassLoader);
-      scanThroughClassLoaders(baseDir, contextClassLoader);
+      scanThroughClassLoaders(baseDir, systemClassLoader, recursive);
+      scanThroughClassLoaders(baseDir, contextClassLoader, recursive);
     }
+  }
+
+  private void checkPackageName(String packageName) {
+
   }
 
   private String getPackageToDirectory(String packageName) {
@@ -66,7 +72,7 @@ public class ClasspathResourceImpl {
     scan(SCAN_ALL);
   }
 
-  private void scanThroughClassLoaders(String baseDir, ClassLoader classLoader) {
+  private void scanThroughClassLoaders(String baseDir, ClassLoader classLoader, boolean recursive) {
     try {
       Enumeration<URL> resources = classLoader.getResources(baseDir);
       Iterator<URL> iterator = resources.asIterator();
@@ -77,7 +83,7 @@ public class ClasspathResourceImpl {
         if (protocol.equals(PROTOCOL_FILE) && packageRoot.isDirectory()) {
           File[] files = packageRoot.listFiles();
           Optional.ofNullable(files).ifPresent(fs ->
-              Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader)));
+              Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader, recursive)));
         } else if (protocol.equals(PROTOCOL_JAR)) {
           //TODO
           System.out.println("JAR needs to be exploded:" + baseURL);
@@ -90,7 +96,7 @@ public class ClasspathResourceImpl {
     }
   }
 
-  private void process(File file, String baseDir, ClassLoader classLoader) {
+  private void process(File file, String baseDir, ClassLoader classLoader, boolean recursive) {
     if (file.isFile() && isClassFile(file)) {
       repo.add(loadClass(file, baseDir, classLoader));
       return;
@@ -102,10 +108,10 @@ public class ClasspathResourceImpl {
       return;
     }
 
-    var newBaseDir = baseDir.concat(file.getName().concat("/"));
+    var newBaseDir = baseDir.concat("/").concat(file.getName().concat("/"));
     Arrays.stream(files).forEach(child -> {
-      if (child.isDirectory()) {
-        process(child, newBaseDir, classLoader);
+      if (child.isDirectory() && recursive) {
+        process(child, newBaseDir, classLoader, recursive);
       } else {
         Class<?> clazz = loadClass(child, newBaseDir, classLoader);
         if (!repo.contains(clazz)) {
