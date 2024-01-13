@@ -15,7 +15,7 @@ The maven-based project is still under development. If you want to try out, you 
 <dependency>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0.A</version>
 </dependency>
 ```
 
@@ -42,7 +42,7 @@ public class ManagedObject {
 
   @Wire
   private ManagedDependency managedDependency;
-  
+}
 ```
 
 and `@Wire` annotation to introduce dependency injection point.
