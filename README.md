@@ -19,7 +19,7 @@ The maven-based project is still under development. If you want to try out, you 
 </dependency>
 ```
 
-### Usage
+## Usage
 
 To initialize the Mikron context in your Java application, you will use Mikron annotations. In the following example, we activate the context and make the framework search for managed instances in the specified package:
 
@@ -28,6 +28,7 @@ To initialize the Mikron context in your Java application, you will use Mikron a
 public class Main {
 
   public static void main(String[] args) {
+    // Start the Mikron context.
     MikronContext.init(Main.class);
   }
 }
@@ -41,19 +42,19 @@ public class ManagedObject {
 
   @Wire
   private ManagedDependency managedDependency;
-
+  
 ```
 
-and @Wire annotation to introduce dependency injection point.
+and `@Wire` annotation to introduce dependency injection point.
 
-## Bugs and Feedback**
+## Bugs and Feedback
 
 For bugs, questions and discussions please use
-the [GitHub Issues](https://github.com/notingolmo/darkest/issues).
+the [GitHub Issues](https://github.com/notingolmo/mikron/issues).
 
 ## LICENSE
 
-Copyright 2023 Erhan Bagdemir
+Copyright 2024 Erhan Bagdemir
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
