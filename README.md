@@ -1,11 +1,15 @@
-<img src="wiki/mikron-logo.png" width=200 />
----
+<p align="center">
+<img src="wiki/mikron-logo.png" width=150 />    
+</p>
+
+<div align="center">
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![License](https://img.shields.io/badge/JDK-21%20-green.svg)](https://github.com/reevik/darkest/wiki/Java-Support)
 [![License](https://img.shields.io/badge/Release-0.1.1.A%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
 [![Javadoc](https://img.shields.io/badge/Javadoc%20-green.svg)](https://reevik.github.io/mikron/)
 
+</div>
 
 A minimalistic IoC container for dependency injection. Dependency injection is considered to be a feature in large enterprise frameworks like Spring. The maven-based project is still under development. If you want to try out, you can clone and build it from the source. 
 
