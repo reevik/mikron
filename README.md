@@ -4,10 +4,11 @@
 
 <div align="center">
 
+[![Build](https://circleci.com/gh/reevik/mikron.svg?style=shield)](https://opensource.org/licenses/Apache-2.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![License](https://img.shields.io/badge/JDK-21%20-green.svg)](https://github.com/reevik/darkest/wiki/Java-Support)
-[![License](https://img.shields.io/badge/Release-0.1.1.A%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
-[![Javadoc](https://img.shields.io/badge/Javadoc%20-green.svg)](https://reevik.github.io/mikron/)
+[![JDK](https://img.shields.io/badge/JDK-21%20-green.svg)](https://github.com/reevik/darkest/wiki/Java-Support)
+[![Release](https://img.shields.io/badge/Release-0.1.1.A%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
+[![Javadocs](https://img.shields.io/badge/Javadoc%20-green.svg)](https://reevik.github.io/mikron/)
 
 </div>
 
