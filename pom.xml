@@ -5,6 +5,7 @@
   <artifactId>mikron</artifactId>
   <version>0.1.1.A-SNAPSHOT</version>
   <url>https://github.com/reevik/mikron.git</url>
+  <name>mikron</name>
   <description>Mikron is a minimalist Java library for Dependency Injection.</description>
   <distributionManagement>
     <snapshotRepository>
