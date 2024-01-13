@@ -38,7 +38,7 @@ public class Main {
 }
 ```
 
-To define managed instances, you will use @Managed annotation:
+Mikron context is the container where the managed instances reside and the dependencies between such objects get wired. To define managed instances, you will use `@Managed` annotation:
 
 ```java
 @Managed
