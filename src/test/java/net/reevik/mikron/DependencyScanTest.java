@@ -33,11 +33,6 @@ import org.junit.jupiter.api.Test;
 @ManagedApplication(packages = {"net.reevik.mikron.test"})
 public class DependencyScanTest {
 
-  @BeforeEach
-  public void setUp() {
-
-  }
-
   @Test
   void testScanAllClasses() {
     ClasspathResourceImpl dependencyScan = ClasspathResourceImpl.of(ClasspathResourceImpl.SCAN_ALL);

@@ -74,7 +74,6 @@ public class MikronContext {
     final var annotationResources = classpath.findClassesBy(Managed.class);
     annotationResources.forEach(r -> instances.put(INSTANCE.getName(r), INSTANCE.initObject(r)));
     instances.values().forEach(ManagedInstance::wire);
-
   }
 
   private String getName(AnnotationResource<Managed> annotationResource) {

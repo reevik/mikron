@@ -60,7 +60,7 @@ public class ClasspathResourceImpl {
   }
 
   private void checkPackageName(String packageName) {
-
+    // Not yet implemented.
   }
 
   private String getPackageToDirectory(String packageName) {
