@@ -9,7 +9,7 @@
 [![JDK](https://img.shields.io/badge/JDK-21%20-green.svg)](https://github.com/reevik/darkest/wiki/Java-Support)
 [![Release](https://img.shields.io/badge/Release-0.1.1.A%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
 [![Javadocs](https://img.shields.io/badge/Javadoc%20-green.svg)](https://reevik.github.io/mikron/)
-
+[![Gitter](https://img.shields.io/badge/Chat-gitter%20-green.svg)](https://matrix.to/#/#mikron:gitter.im)
 </div>
 
 A minimalistic IoC container for dependency injection and externalized configuration management. Mikron is a small library which enables you to leverage the convenience of dependency injection and configuration management in non-enterprise applications as well. The maven-based project is still under development. If you want to try out, you can clone and build it from the source. 
