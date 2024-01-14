@@ -12,7 +12,7 @@
 
 </div>
 
-A minimalistic IoC container for dependency injection. Dependency injection is considered to be a feature in large enterprise frameworks like Spring. The maven-based project is still under development. If you want to try out, you can clone and build it from the source. 
+A minimalistic IoC container for dependency injection and externalized configuration management. Mikron is a small library which enables you to leverage the convenience of dependency injection and configuration management in non-enterprise applications as well. The maven-based project is still under development. If you want to try out, you can clone and build it from the source. 
 
 ```xml
 

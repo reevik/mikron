@@ -28,11 +28,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.string.Str;
 
 public class ClasspathResourceImpl {
 
   public static final String DEFAULT_BASE_PKG = "/";
-  public static final String[] SCAN_ALL = new String[]{""};
+  public static final String[] SCAN_ALL = new String[]{".*"};
   public static final String PROTOCOL_FILE = "file";
   public static final String PROTOCOL_JAR = "jar";
 
@@ -48,16 +49,23 @@ public class ClasspathResourceImpl {
 
   private void scan(String[] packageNames) {
     for (final var packageName : packageNames) {
+      checkPackageName(packageName);
+      var recursive = packageName.endsWith(".*");
       var baseDir = getPackageToDirectory(packageName);
       var systemClassLoader = ClassLoader.getSystemClassLoader();
       var contextClassLoader = Thread.currentThread().getContextClassLoader();
-      scanThroughClassLoaders(baseDir, systemClassLoader);
-      scanThroughClassLoaders(baseDir, contextClassLoader);
+      scanThroughClassLoaders(baseDir, systemClassLoader, recursive);
+      scanThroughClassLoaders(baseDir, contextClassLoader, recursive);
     }
+  }
+
+  private void checkPackageName(String packageName) {
+    // Not yet implemented.
   }
 
   private String getPackageToDirectory(String packageName) {
     return Optional.ofNullable(packageName)
+        .map(p -> p.replace(".*", ""))
         .map(p -> p.replace(".", "/"))
         .orElse(DEFAULT_BASE_PKG);
   }
@@ -66,7 +74,7 @@ public class ClasspathResourceImpl {
     scan(SCAN_ALL);
   }
 
-  private void scanThroughClassLoaders(String baseDir, ClassLoader classLoader) {
+  private void scanThroughClassLoaders(String baseDir, ClassLoader classLoader, boolean recursive) {
     try {
       Enumeration<URL> resources = classLoader.getResources(baseDir);
       Iterator<URL> iterator = resources.asIterator();
@@ -77,7 +85,7 @@ public class ClasspathResourceImpl {
         if (protocol.equals(PROTOCOL_FILE) && packageRoot.isDirectory()) {
           File[] files = packageRoot.listFiles();
           Optional.ofNullable(files).ifPresent(fs ->
-              Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader)));
+              Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader, recursive)));
         } else if (protocol.equals(PROTOCOL_JAR)) {
           //TODO
           System.out.println("JAR needs to be exploded:" + baseURL);
@@ -90,9 +98,13 @@ public class ClasspathResourceImpl {
     }
   }
 
-  private void process(File file, String baseDir, ClassLoader classLoader) {
+  private void process(File file, String baseDir, ClassLoader classLoader, boolean recursive) {
     if (file.isFile() && isClassFile(file)) {
       repo.add(loadClass(file, baseDir, classLoader));
+      return;
+    }
+
+    if (!recursive) {
       return;
     }
 
@@ -102,10 +114,10 @@ public class ClasspathResourceImpl {
       return;
     }
 
-    var newBaseDir = baseDir.concat(file.getName().concat("/"));
+    final var newBaseDir = getNewBaseDir(file, baseDir);
     Arrays.stream(files).forEach(child -> {
       if (child.isDirectory()) {
-        process(child, newBaseDir, classLoader);
+        process(child, newBaseDir, classLoader, true);
       } else {
         Class<?> clazz = loadClass(child, newBaseDir, classLoader);
         if (!repo.contains(clazz)) {
@@ -113,6 +125,15 @@ public class ClasspathResourceImpl {
         }
       }
     });
+  }
+
+  private static String getNewBaseDir(File file, String baseDir) {
+    var newBaseDir = baseDir;
+    if (!Str.isEmpty(baseDir) && !baseDir.endsWith("/")) {
+      newBaseDir += "/";
+    }
+    newBaseDir += file.getName().concat("/");
+    return newBaseDir;
   }
 
   private static Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {

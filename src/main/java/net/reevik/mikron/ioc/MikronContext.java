@@ -33,8 +33,8 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Mikron context is the inversion-of-control container, which control the life-cycle of the
- * mikron managed instances.
+ * Mikron context is the inversion-of-control container, which control the life-cycle of the mikron
+ * managed instances.
  *
  * @author Erhan Bagdemir
  */
@@ -52,35 +52,44 @@ public class MikronContext {
    */
   private final Map<String, ManagedInstance> managedInstances = new HashMap<>();
 
-  private final ClasspathResourceImpl classpath;
-
   @Wire
   private PropertiesRepository propertiesRepository;
 
-  private MikronContext(Class<?> clazz) {
-    ManagedApplication declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
-    String[] packages = declaredAnnotation.packages();
-    classpath = ClasspathResourceImpl.of(packages);
+  private MikronContext() {
   }
 
-  public static MikronContext init(Class<?> clazz) {
+  public synchronized static MikronContext init(Class<?> clazz) {
     if (INSTANCE == null) {
-      INSTANCE = new MikronContext(clazz);
-      final var instances = INSTANCE.managedInstances;
-      instances.put(MikronContext.class.getName(), new ManagedInstance(null, INSTANCE));
-      final var annotationResources = INSTANCE.classpath.findClassesBy(Managed.class);
-      annotationResources.forEach(r -> instances.put(getName(r), INSTANCE.initObject(r)));
-      instances.values().forEach(ManagedInstance::wire);
+      INSTANCE = new MikronContext();
     }
+    INSTANCE.initializeContext(clazz);
     return INSTANCE;
   }
 
-  private static String getName(AnnotationResource<Managed> annotationResource) {
+  private void initializeContext(Class<?> clazz) {
+    final var classpath = INSTANCE.initializeClasspath(clazz);
+    final var instances = INSTANCE.managedInstances;
+    instances.clear();
+    instances.put(MikronContext.class.getName(), new ManagedInstance(null, INSTANCE));
+    final var annotationResources = classpath.findClassesBy(Managed.class);
+    annotationResources.forEach(r -> instances.put(INSTANCE.getName(r), INSTANCE.initObject(r)));
+    instances.values().forEach(ManagedInstance::wire);
+  }
+
+  private String getName(AnnotationResource<Managed> annotationResource) {
     var name = annotationResource.annotation().name();
     if (Str.isEmpty(name)) {
       return annotationResource.clazz().getName();
     }
     return name;
+  }
+
+  private ClasspathResourceImpl initializeClasspath(Class<?> clazz) {
+    final ClasspathResourceImpl classpath;
+    ManagedApplication declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
+    String[] packages = declaredAnnotation.packages();
+    classpath = ClasspathResourceImpl.of(packages);
+    return classpath;
   }
 
   private ManagedInstance initObject(AnnotationResource<Managed> annotationResource) {

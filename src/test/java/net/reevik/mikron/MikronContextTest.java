@@ -21,18 +21,25 @@ import java.util.Optional;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.test.AnnotatedTestClass;
+import net.reevik.mikron.test.deep.ManagedDeepClass;
 import org.junit.jupiter.api.Test;
 
-@ManagedApplication(packages = {"net.reevik.mikron.test"})
+@ManagedApplication(packages = {"net.reevik.mikron.*"})
 public class MikronContextTest {
 
   @Test
   void testWiring() {
-    MikronContext context = MikronContext.init(DependencyScanTest.class);
-    Optional<AnnotatedTestClass> instance = context.getInstance(
-        AnnotatedTestClass.class.getName());
+    var context = MikronContext.init(DependencyScanTest.class);
+    Optional<AnnotatedTestClass> instance = context.getInstance(AnnotatedTestClass.class.getName());
     assertThat(instance).isPresent();
-    AnnotatedTestClass annotatedTest = instance.get();
+    var annotatedTest = instance.get();
     assertThat(annotatedTest.getAnnotatedDependencyTestClass()).isNotNull();
+  }
+
+  @Test
+  void testScanRecursively() {
+    MikronContext context = MikronContext.init(MikronContextTest.class);
+    Optional<AnnotatedTestClass> instance = context.getInstance(ManagedDeepClass.class.getName());
+    assertThat(instance).isPresent();
   }
 }
