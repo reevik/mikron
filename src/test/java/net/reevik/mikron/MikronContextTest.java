@@ -38,7 +38,7 @@ public class MikronContextTest {
 
   @Test
   void testScanRecursively() {
-    MikronContext context = MikronContext.init(DependencyScanTest.class);
+    MikronContext context = MikronContext.init(MikronContextTest.class);
     Optional<AnnotatedTestClass> instance = context.getInstance(ManagedDeepClass.class.getName());
     assertThat(instance).isPresent();
   }

@@ -28,11 +28,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.string.Str;
 
 public class ClasspathResourceImpl {
 
   public static final String DEFAULT_BASE_PKG = "/";
-  public static final String[] SCAN_ALL = new String[]{""};
+  public static final String[] SCAN_ALL = new String[]{".*"};
   public static final String PROTOCOL_FILE = "file";
   public static final String PROTOCOL_JAR = "jar";
 
@@ -64,6 +65,7 @@ public class ClasspathResourceImpl {
 
   private String getPackageToDirectory(String packageName) {
     return Optional.ofNullable(packageName)
+        .map(p -> p.replace(".*", ""))
         .map(p -> p.replace(".", "/"))
         .orElse(DEFAULT_BASE_PKG);
   }
@@ -102,16 +104,20 @@ public class ClasspathResourceImpl {
       return;
     }
 
+    if (!recursive) {
+      return;
+    }
+
     File[] files = file.listFiles();
     if (files == null) {
       // empty package, or non-class file.
       return;
     }
 
-    var newBaseDir = baseDir.concat("/").concat(file.getName().concat("/"));
+    final var newBaseDir = getNewBaseDir(file, baseDir);
     Arrays.stream(files).forEach(child -> {
-      if (child.isDirectory() && recursive) {
-        process(child, newBaseDir, classLoader, recursive);
+      if (child.isDirectory()) {
+        process(child, newBaseDir, classLoader, true);
       } else {
         Class<?> clazz = loadClass(child, newBaseDir, classLoader);
         if (!repo.contains(clazz)) {
@@ -119,6 +125,15 @@ public class ClasspathResourceImpl {
         }
       }
     });
+  }
+
+  private static String getNewBaseDir(File file, String baseDir) {
+    var newBaseDir = baseDir;
+    if (!Str.isEmpty(baseDir) && !baseDir.endsWith("/")) {
+      newBaseDir += "/";
+    }
+    newBaseDir += file.getName().concat("/");
+    return newBaseDir;
   }
 
   private static Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
