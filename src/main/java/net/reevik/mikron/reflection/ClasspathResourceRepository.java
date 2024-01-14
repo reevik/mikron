@@ -30,20 +30,27 @@ import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.string.Str;
 
-public class ClasspathResourceImpl {
+/**
+ * Repository implementation for classpath. It walks through the system and context
+ * {@link ClassLoader} and registers the classes. It provides a public interface which allows
+ * clients, for instance, search for class definitions with the annotations given.
+ *
+ * @author Erhan Bagdemir
+ */
+public class ClasspathResourceRepository {
 
   public static final String DEFAULT_BASE_PKG = "/";
   public static final String[] SCAN_ALL = new String[]{".*"};
-  public static final String PROTOCOL_FILE = "file";
-  public static final String PROTOCOL_JAR = "jar";
+  private static final String PROTOCOL_FILE = "file";
+  private static final String PROTOCOL_JAR = "jar";
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
-  public static ClasspathResourceImpl of(String[] packageName) {
-    return new ClasspathResourceImpl(packageName);
+  public static ClasspathResourceRepository of(String[] packageName) {
+    return new ClasspathResourceRepository(packageName);
   }
 
-  private ClasspathResourceImpl(String[] packageName) {
+  private ClasspathResourceRepository(String[] packageName) {
     scan(packageName);
   }
 
@@ -127,7 +134,7 @@ public class ClasspathResourceImpl {
     });
   }
 
-  private static String getNewBaseDir(File file, String baseDir) {
+  private String getNewBaseDir(File file, String baseDir) {
     var newBaseDir = baseDir;
     if (!Str.isEmpty(baseDir) && !baseDir.endsWith("/")) {
       newBaseDir += "/";
@@ -136,7 +143,7 @@ public class ClasspathResourceImpl {
     return newBaseDir;
   }
 
-  private static Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
+  private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
     try {
       var normPkg = (baseDir.endsWith("/") ? baseDir : baseDir.concat("/")).replace("/", ".");
       return classLoader.loadClass(normPkg.concat(parent.getName().replace(".class", "")));

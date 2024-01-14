@@ -15,11 +15,28 @@
  */
 package net.reevik.mikron.string;
 
+/**
+ * A string utility implementation. "Str" provides convenience methods to process char sequences.
+ */
 public class Str {
 
   private static final String BLANK = "";
 
+  /**
+   * Returns true if the input is null or doesn't contain any character other than spaces.
+   * @param input String input.
+   * @return If the {@link String} instance empty.
+   */
   public static boolean isEmpty(String input) {
     return input == null || BLANK.equals(input.trim());
+  }
+
+  /**
+   * Returns true if the input is NOT null and doesn't contain any character other than spaces.
+   * @param input String input.
+   * @return If the {@link String} instance blank.
+   */
+  public static boolean isBlank(String input) {
+    return input != null && BLANK.equals(input.trim());
   }
 }

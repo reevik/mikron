@@ -25,9 +25,8 @@ import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.ioc.MikronContext.ManagedInstance;
-import net.reevik.mikron.reflection.ClasspathResourceImpl;
+import net.reevik.mikron.reflection.ClasspathResourceRepository;
 import net.reevik.mikron.test.AnnotatedDependencyTestClass;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @ManagedApplication(packages = {"net.reevik.mikron.test"})
@@ -35,7 +34,8 @@ public class DependencyScanTest {
 
   @Test
   void testScanAllClasses() {
-    ClasspathResourceImpl dependencyScan = ClasspathResourceImpl.of(ClasspathResourceImpl.SCAN_ALL);
+    ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
+        ClasspathResourceRepository.SCAN_ALL);
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
     assertThat(by).hasSize(4);
   }

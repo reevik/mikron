@@ -26,7 +26,7 @@ import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.annotation.Wire;
 import net.reevik.mikron.configuration.PropertiesRepository;
-import net.reevik.mikron.reflection.ClasspathResourceImpl;
+import net.reevik.mikron.reflection.ClasspathResourceRepository;
 import net.reevik.mikron.string.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,11 +84,11 @@ public class MikronContext {
     return name;
   }
 
-  private ClasspathResourceImpl initializeClasspath(Class<?> clazz) {
-    final ClasspathResourceImpl classpath;
+  private ClasspathResourceRepository initializeClasspath(Class<?> clazz) {
+    final ClasspathResourceRepository classpath;
     ManagedApplication declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
     String[] packages = declaredAnnotation.packages();
-    classpath = ClasspathResourceImpl.of(packages);
+    classpath = ClasspathResourceRepository.of(packages);
     return classpath;
   }
 
