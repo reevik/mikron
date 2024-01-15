@@ -43,6 +43,7 @@ public class ClasspathResourceRepository {
   public static final String[] SCAN_ALL = new String[]{".*"};
   private static final String PROTOCOL_FILE = "file";
   private static final String PROTOCOL_JAR = "jar";
+  public static final String CLASS_EXT = ".class";
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
@@ -146,14 +147,14 @@ public class ClasspathResourceRepository {
   private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
     try {
       var normPkg = (baseDir.endsWith("/") ? baseDir : baseDir.concat("/")).replace("/", ".");
-      return classLoader.loadClass(normPkg.concat(parent.getName().replace(".class", "")));
+      return classLoader.loadClass(normPkg.concat(parent.getName().replace(CLASS_EXT, "")));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
   }
 
   private boolean isClassFile(File parent) {
-    return parent.getName().endsWith(".class");
+    return parent.getName().endsWith(CLASS_EXT);
   }
 
   /**

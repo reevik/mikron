@@ -60,7 +60,7 @@ public class MikronContext {
   private PropertiesRepository propertiesRepository;
 
   @Configurable(name = "key")
-  private String key;
+  private int key;
 
   private MikronContext() {
   }
@@ -177,7 +177,6 @@ public class MikronContext {
           var bindingInstance = binding.getConstructor().newInstance();
           bindingInstance.bind(field,
               instance, managedConfig.map(g -> g.get(propertiesClassName)).orElse(null));
-          field.set(instance, managedConfig.map(g -> g.get(propertiesClassName)).orElse(null));
         }
       } catch (IllegalAccessException e) {
         LOG.error("Cannot wire the field={} Reason={}", propertiesClassName, e.getMessage());
