@@ -41,6 +41,9 @@ public class DefaultConfigurationBinding implements IConfigurationBinding {
   @Override
   public void bind(Field managedField, Object managedInstance, Object configValue) {
     try {
+      if (configValue == null) {
+        return;
+      }
       managedField.setAccessible(true);
       if (managedField.getType().isAssignableFrom(configValue.getClass())) {
         managedField.set(managedInstance, configValue);
