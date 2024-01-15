@@ -27,6 +27,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.string.Str;
 
@@ -43,6 +44,7 @@ public class ClasspathResourceRepository {
   public static final String[] SCAN_ALL = new String[]{".*"};
   private static final String PROTOCOL_FILE = "file";
   private static final String PROTOCOL_JAR = "jar";
+  public static final String CLASS_EXT = ".class";
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
@@ -55,7 +57,9 @@ public class ClasspathResourceRepository {
   }
 
   private void scan(String[] packageNames) {
-    for (final var packageName : packageNames) {
+    var packages = Arrays.stream(packageNames).collect(Collectors.toList());
+    packages.add("net.reevik.mikron.configuration");
+    for (final var packageName : packages) {
       checkPackageName(packageName);
       var recursive = packageName.endsWith(".*");
       var baseDir = getPackageToDirectory(packageName);
@@ -146,14 +150,14 @@ public class ClasspathResourceRepository {
   private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
     try {
       var normPkg = (baseDir.endsWith("/") ? baseDir : baseDir.concat("/")).replace("/", ".");
-      return classLoader.loadClass(normPkg.concat(parent.getName().replace(".class", "")));
+      return classLoader.loadClass(normPkg.concat(parent.getName().replace(CLASS_EXT, "")));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
   }
 
   private boolean isClassFile(File parent) {
-    return parent.getName().endsWith(".class");
+    return parent.getName().endsWith(CLASS_EXT);
   }
 
   /**

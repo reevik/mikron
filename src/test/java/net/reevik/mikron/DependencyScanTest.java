@@ -17,16 +17,19 @@ package net.reevik.mikron;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
+import net.reevik.mikron.configuration.PropertiesRepository;
 import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.ioc.MikronContext.ManagedInstance;
 import net.reevik.mikron.reflection.ClasspathResourceRepository;
 import net.reevik.mikron.test.AnnotatedDependencyTestClass;
+import net.reevik.mikron.test.AnnotatedTestClass;
 import org.junit.jupiter.api.Test;
 
 @ManagedApplication(packages = {"net.reevik.mikron.test"})
@@ -37,15 +40,17 @@ public class DependencyScanTest {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(4);
+    assertThat(by).hasSize(6);
   }
 
   @Test
   void testMikronContext_nonRecursive() {
     MikronContext context = MikronContext.init(DependencyScanTest.class);
     Map<String, ManagedInstance> managedInstances = context.getManagedInstances();
-    assertThat(managedInstances).hasSize(3);
-    Optional<ManagedInstance> first = managedInstances.values().stream().findFirst();
-    assertThat(first.get().instance()).isInstanceOf(AnnotatedDependencyTestClass.class);
+    assertThat(managedInstances).hasSize(4);
+    assertThat(managedInstances.containsKey(AnnotatedTestClass.class.getName())).isTrue();
+    assertThat(managedInstances.containsKey(AnnotatedDependencyTestClass.class.getName())).isTrue();
+    assertThat(managedInstances.containsKey(MikronContext.class.getSimpleName())).isTrue();
+    assertThat(managedInstances.containsKey(PropertiesRepository.class.getName())).isTrue();
   }
 }

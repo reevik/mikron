@@ -15,6 +15,12 @@
  */
 package net.reevik.mikron.configuration;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.Wire;
 import net.reevik.mikron.ioc.MikronContext;
@@ -22,8 +28,39 @@ import net.reevik.mikron.ioc.MikronContext;
 @Managed
 public class PropertiesRepository {
 
-  @Wire
+  @Wire(name = "MikronContext")
   private MikronContext mikronContext;
 
+  private final Map<String, Properties> configurations = new HashMap<>();
 
+  public PropertiesRepository() {
+  }
+
+  public Optional<Properties> getConfiguration(String name) {
+    return Optional.ofNullable(configurations.get(name));
+  }
+
+  public void load() {
+    if (mikronContext != null) {
+      mikronContext.getManagedInstances().forEach((key, val) -> loadProperties(key));
+    }
+  }
+
+  private void loadProperties(String e) {
+    Properties properties = new Properties();
+    try {
+      var configName = e.concat(".properties");
+      var resource = getClass().getClassLoader().getResource(configName);
+      if (resource != null) {
+        var file = new File(resource.getFile());
+        if (file.exists() && file.isFile()) {
+          var resourceAsStream = getClass().getResourceAsStream("/" + file.getName());
+          properties.load(resourceAsStream);
+          configurations.put(e, properties);
+        }
+      }
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
 }
