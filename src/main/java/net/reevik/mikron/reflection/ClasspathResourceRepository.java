@@ -27,6 +27,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.string.Str;
 
@@ -56,7 +57,9 @@ public class ClasspathResourceRepository {
   }
 
   private void scan(String[] packageNames) {
-    for (final var packageName : packageNames) {
+    var packages = Arrays.stream(packageNames).collect(Collectors.toList());
+    packages.add("net.reevik.mikron.configuration");
+    for (final var packageName : packages) {
       checkPackageName(packageName);
       var recursive = packageName.endsWith(".*");
       var baseDir = getPackageToDirectory(packageName);
