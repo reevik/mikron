@@ -20,8 +20,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import net.reevik.mikron.configuration.DefaultConfigurationBinding;
-import net.reevik.mikron.configuration.IConfigurationBinding;
+import net.reevik.mikron.configuration.DefaultTypeConverter;
+import net.reevik.mikron.configuration.TypeConverter;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -40,5 +40,5 @@ public @interface Configurable {
    *
    * @return A custom implementation for binding.
    */
-  Class<? extends IConfigurationBinding> binding() default DefaultConfigurationBinding.class;
+  Class<? extends TypeConverter> converter() default DefaultTypeConverter.class;
 }

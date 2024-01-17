@@ -35,4 +35,14 @@ public class ConfigurationBindingTest {
     var config = instance.map(ManagedConfiguration::getStrConfig).orElseThrow(AssertionError::new);
     assertThat(config).isEqualTo("test1");
   }
+
+  @Test
+  void testBindingOfCustomTypes() {
+    var context = MikronContext.init(ConfigurationBindingTest.class);
+    Optional<ManagedConfiguration> instance = context.getInstance(
+        ManagedConfiguration.class.getSimpleName());
+    assertThat(instance).isPresent();
+    var config = instance.map(ManagedConfiguration::getStrConfig).orElseThrow(AssertionError::new);
+    assertThat(config).isEqualTo("test1");
+  }
 }

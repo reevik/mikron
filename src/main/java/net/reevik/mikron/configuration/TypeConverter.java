@@ -13,25 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron.test2;
+package net.reevik.mikron.configuration;
 
-import net.reevik.mikron.annotation.Configurable;
-import net.reevik.mikron.annotation.Managed;
+public interface TypeConverter {
 
-@Managed(name = "ManagedConfiguration")
-public class ManagedConfiguration {
-
-  @Configurable(name = "config.str")
-  private String strConfig;
-
-  @Configurable(name = "config.custom", converter = MyConfigEntityBinding.class)
-  private MyConfigEntity entity;
-
-  public String getStrConfig() {
-    return strConfig;
-  }
-
-  public MyConfigEntity getEntity() {
-    return entity;
-  }
+  Object convert(Object value);
 }

@@ -15,23 +15,12 @@
  */
 package net.reevik.mikron.test2;
 
-import net.reevik.mikron.annotation.Configurable;
-import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.configuration.TypeConverter;
 
-@Managed(name = "ManagedConfiguration")
-public class ManagedConfiguration {
+public class MyConfigEntityBinding implements TypeConverter {
 
-  @Configurable(name = "config.str")
-  private String strConfig;
-
-  @Configurable(name = "config.custom", converter = MyConfigEntityBinding.class)
-  private MyConfigEntity entity;
-
-  public String getStrConfig() {
-    return strConfig;
-  }
-
-  public MyConfigEntity getEntity() {
-    return entity;
+  @Override
+  public MyConfigEntity convert(Object value) {
+    return new MyConfigEntity(value.toString());
   }
 }

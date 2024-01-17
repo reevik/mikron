@@ -15,23 +15,5 @@
  */
 package net.reevik.mikron.test2;
 
-import net.reevik.mikron.annotation.Configurable;
-import net.reevik.mikron.annotation.Managed;
-
-@Managed(name = "ManagedConfiguration")
-public class ManagedConfiguration {
-
-  @Configurable(name = "config.str")
-  private String strConfig;
-
-  @Configurable(name = "config.custom", converter = MyConfigEntityBinding.class)
-  private MyConfigEntity entity;
-
-  public String getStrConfig() {
-    return strConfig;
-  }
-
-  public MyConfigEntity getEntity() {
-    return entity;
-  }
+public record MyConfigEntity(String value) {
 }
