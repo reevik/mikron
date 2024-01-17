@@ -21,14 +21,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.annotation.Wire;
-import net.reevik.mikron.configuration.IConfigurationBinding;
+import net.reevik.mikron.configuration.ConfigurationBinding;
 import net.reevik.mikron.configuration.PropertiesRepository;
+import net.reevik.mikron.configuration.TypeConverter;
 import net.reevik.mikron.reflection.ClasspathResourceRepository;
 import net.reevik.mikron.string.Str;
 import org.slf4j.Logger;
@@ -169,22 +169,20 @@ public class MikronContext {
       bindConfig(field, propertiesName, propertiesClassName);
     }
 
-    private void bindConfig(Field field, String propertiesName, String propertiesClassName) {
+    private void bindConfig(Field field, String className, String propName) {
       try {
         if (field.trySetAccessible()) {
-          var managedConfig = INSTANCE.propertiesRepository.getConfiguration(propertiesName);
-          var binding = field.getAnnotation(Configurable.class).binding();
-          var bindingInstance = binding.getConstructor().newInstance();
-          bindingInstance.bind(field,
-              instance, managedConfig.map(g -> g.get(propertiesClassName)).orElse(null));
+          var managedConfig = INSTANCE.propertiesRepository.getConfiguration(className);
+          var converter = field.getAnnotation(Configurable.class).converter();
+          var bindingInstance = INSTANCE.getConverter(field.getType(), converter);
+          var targetVal = bindingInstance.convert(managedConfig
+              .map(g -> g.get(propName))
+              .orElse(null));
+          new ConfigurationBinding().bind(field, instance, targetVal);
         }
       } catch (IllegalAccessException e) {
-        LOG.error("Cannot wire the field={} Reason={}", propertiesClassName, e.getMessage());
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      } catch (InstantiationException e) {
-        throw new RuntimeException(e);
-      } catch (NoSuchMethodException e) {
+        LOG.error("Cannot wire the field={} Reason={}", propName, e.getMessage());
+      } catch (InvocationTargetException | NoSuchMethodException | InstantiationException e) {
         throw new RuntimeException(e);
       }
     }
@@ -222,4 +220,15 @@ public class MikronContext {
       return Str.isEmpty(name) ? field.getType().getName() : name;
     }
   }
+
+  private TypeConverter getConverter(Class<?> clazz,
+      Class<? extends TypeConverter> converter)
+      throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    try {
+      return converter.getConstructor(Class.class).newInstance(clazz);
+    } catch (NoSuchMethodException nsm) {
+      return converter.getConstructor().newInstance();
+    }
+  }
 }
+
