@@ -42,7 +42,18 @@ public class ConfigurationBindingTest {
     Optional<ManagedConfiguration> instance = context.getInstance(
         ManagedConfiguration.class.getSimpleName());
     assertThat(instance).isPresent();
-    var config = instance.map(ManagedConfiguration::getStrConfig).orElseThrow(AssertionError::new);
-    assertThat(config).isEqualTo("test1");
+    var config = instance.map(ManagedConfiguration::getEntity).orElseThrow(AssertionError::new);
+    assertThat(config).isNotNull();
+    assertThat(config.value()).isEqualTo("test2");
+  }
+
+  @Test
+  void testNonExistingConfigurationMustBeNull() {
+    var context = MikronContext.init(ConfigurationBindingTest.class);
+    Optional<ManagedConfiguration> instance = context.getInstance(
+        ManagedConfiguration.class.getSimpleName());
+    assertThat(instance).isPresent();
+    var config = instance.map(ManagedConfiguration::getNotExist).orElse(null);
+    assertThat(config).isNull();
   }
 }

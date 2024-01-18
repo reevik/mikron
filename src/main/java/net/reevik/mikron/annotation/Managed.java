@@ -21,10 +21,50 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * A managed instance, of which life cycle is under the control of the IoC microkernel. Other
+ * managed instances which declare managed entities as a dependency by using {@link Wire} on their
+ * class fields, may directly access them without explicitly instantiating them:
+ *
+ * <pre>
+ *   @Managed
+ *   public class ManagedInstance {
+ *
+ *       @Wire
+ *       private AnotherManagedInstance another;
+ *
+ *       public void foo() {
+ *            another.bar();
+ *       }
+ *   }
+ * </pre>
+ *
+ * The manage instances can be explicitly named. In this case, optional name parameter is used in
+ * {@link Managed} and {@link Wire} annotations:
+ *
+ * <pre>
+ *   @Managed(name="This")
+ *   public class ManagedInstance {
+ *
+ *       @Wire(name="That")
+ *       private AnotherManagedInstance another;
+ *
+ *       public void foo() {
+ *            another.bar();
+ *       }
+ *   }
+ * </pre>
+ *
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Managed {
 
+  /**
+   * Optional name of the managed instance that can be used in {@link Wire} annotation.
+   *
+   * @return The name of the managed instance.
+   */
   String name() default "";
 }

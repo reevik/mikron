@@ -43,6 +43,9 @@ public class DefaultTypeConverter implements TypeConverter {
 
   @Override
   public Object convert(Object value) {
+    if (value == null) {
+      return null;
+    }
     Function<String, ?> stringFunction = converters.get(returnType);
     return stringFunction.apply(value.toString());
   }
