@@ -27,11 +27,18 @@ public class ManagedConfiguration {
   @Configurable(name = "config.custom", converter = MyConfigEntityBinding.class)
   private MyConfigEntity entity;
 
+  @Configurable(name = "config.not.exist")
+  private String notExist;
+
   public String getStrConfig() {
     return strConfig;
   }
 
   public MyConfigEntity getEntity() {
     return entity;
+  }
+
+  public String getNotExist() {
+    return notExist;
   }
 }
