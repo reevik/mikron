@@ -27,10 +27,10 @@ import java.lang.annotation.Target;
  * class fields, may directly access them without explicitly instantiating them:
  *
  * <pre>
- *   @Managed
+ *   &#064;Managed
  *   public class ManagedInstance {
  *
- *       @Wire
+ *       &#064;Wire
  *       private AnotherManagedInstance another;
  *
  *       public void foo() {
@@ -43,10 +43,10 @@ import java.lang.annotation.Target;
  * {@link Managed} and {@link Wire} annotations:
  *
  * <pre>
- *   @Managed(name="This")
+ *   &#064;Managed(name="This")
  *   public class ManagedInstance {
  *
- *       @Wire(name="That")
+ *       &#064;Wire(name="That")
  *       private AnotherManagedInstance another;
  *
  *       public void foo() {
