@@ -21,9 +21,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * The annotation, which is used to mark the dependency injection point on the class fields. The
+ * name of the object can be provided as parameter, if the managed instance is a named one. You
+ * can name the managed entities in their {@link Managed} annotation.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Wire {
+
+  /**
+   * Optional name of the managed instance which will be injected.
+   *
+   * @return The name of the managed instance.
+   */
   String name() default "";
 }
