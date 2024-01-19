@@ -16,30 +16,24 @@
 package net.reevik.mikron;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.math.BigInteger;
 import java.util.Optional;
 import net.reevik.mikron.annotation.ManagedApplication;
+import net.reevik.mikron.ioc.DependencyWiringException;
 import net.reevik.mikron.ioc.MikronContext;
-import net.reevik.mikron.test.AnnotatedTestClass;
-import net.reevik.mikron.test.deep.ManagedDeepClass;
+import net.reevik.mikron.test5.UncastableEntity;
+import net.reevik.mikron.test5.UncastableWiringEntity;
 import org.junit.jupiter.api.Test;
 
-@ManagedApplication(packages = {"net.reevik.mikron.test.*"})
-public class MikronContextTest {
+@ManagedApplication(packages = {"net.reevik.mikron.test5"})
+public class UncastableWiringTest {
+
 
   @Test
-  void testWiring() {
-    var context = MikronContext.init(DependencyScanTest.class);
-    Optional<AnnotatedTestClass> instance = context.getInstance(AnnotatedTestClass.class.getName());
-    assertThat(instance).isPresent();
-    var annotatedTest = instance.get();
-    assertThat(annotatedTest.getAnnotatedDependencyTestClass()).isNotNull();
-  }
-
-  @Test
-  void testScanRecursively() {
-    MikronContext context = MikronContext.init(MikronContextTest.class);
-    Optional<AnnotatedTestClass> instance = context.getInstance(ManagedDeepClass.class.getName());
-    assertThat(instance).isPresent();
+  void uncastableWiringFails() {
+    assertThatThrownBy(() -> MikronContext.init(UncastableWiringTest.class)).isExactlyInstanceOf(
+        DependencyWiringException.class);
   }
 }
