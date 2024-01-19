@@ -104,6 +104,10 @@ public class MikronContext {
   private ClasspathResourceRepository initializeClasspath(Class<?> clazz) {
     final ClasspathResourceRepository classpath;
     final var declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
+    if (declaredAnnotation == null) {
+      throw new ApplicationInitializationException("No managed application found with "
+          + "@ManagedApplication annotation.");
+    }
     classpath = ClasspathResourceRepository.of(declaredAnnotation.packages());
     return classpath;
   }
@@ -160,6 +164,8 @@ public class MikronContext {
         }
       } catch (IllegalAccessException e) {
         LOG.error("Cannot wire the field={} Reason={}", classKey, e.getMessage());
+      } catch (IllegalArgumentException e) {
+        throw new DependencyWiringException(e);
       }
     }
 

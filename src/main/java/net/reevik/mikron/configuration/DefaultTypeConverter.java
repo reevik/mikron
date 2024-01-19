@@ -47,6 +47,11 @@ public class DefaultTypeConverter implements TypeConverter {
       return null;
     }
     Function<String, ?> stringFunction = converters.get(returnType);
-    return stringFunction.apply(value.toString());
+    if (stringFunction != null) {
+      return stringFunction.apply(value.toString());
+    }
+    throw new ConverterNotFoundException(
+        "Cannot convert the configuration value=" + value + " to of type: " + value.getClass() +
+            " into " + returnType + ".");
   }
 }
