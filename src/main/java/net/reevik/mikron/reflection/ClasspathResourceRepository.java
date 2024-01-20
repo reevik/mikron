@@ -27,6 +27,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.string.Str;
@@ -98,8 +100,20 @@ public class ClasspathResourceRepository {
           Optional.ofNullable(files).ifPresent(fs ->
               Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader, recursive)));
         } else if (protocol.equals(PROTOCOL_JAR)) {
-          //TODO
-          System.out.println("JAR needs to be exploded:" + baseURL);
+          final Enumeration<JarEntry> entries;
+          var path = baseURL.toString();
+          var split = path.split("!");
+          try (final var jarFile = new JarFile(split[0].replace("jar:file:", ""))) {
+            entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+              var entry = entries.nextElement();
+              var entryName = entry.getName();
+              if (entryName.endsWith(".class")) {
+                Class<?> aClass = loadClass(entryName, classLoader);
+                repo.add(aClass);
+              }
+            }
+          }
         } else {
           throw new IllegalArgumentException("Not a valid package:" + baseURL);
         }
@@ -145,6 +159,15 @@ public class ClasspathResourceRepository {
     }
     newBaseDir += file.getName().concat("/");
     return newBaseDir;
+  }
+
+  private Class<?> loadClass(String classPath, ClassLoader classLoader) {
+    try {
+      var fqClass = classPath.replace("/", ".").replace(CLASS_EXT, "");
+      return classLoader.loadClass(fqClass);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
