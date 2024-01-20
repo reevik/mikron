@@ -27,9 +27,14 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.string.Str;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Repository implementation for classpath. It walks through the system and context
@@ -40,6 +45,7 @@ import net.reevik.mikron.string.Str;
  */
 public class ClasspathResourceRepository {
 
+  private final static Logger LOG = LoggerFactory.getLogger(ClasspathResourceRepository.class);
   public static final String DEFAULT_BASE_PKG = "/";
   public static final String[] SCAN_ALL = new String[]{".*"};
   private static final String PROTOCOL_FILE = "file";
@@ -98,8 +104,19 @@ public class ClasspathResourceRepository {
           Optional.ofNullable(files).ifPresent(fs ->
               Arrays.stream(fs).forEach(file -> process(file, baseDir, classLoader, recursive)));
         } else if (protocol.equals(PROTOCOL_JAR)) {
-          //TODO
-          System.out.println("JAR needs to be exploded:" + baseURL);
+          final Enumeration<JarEntry> entries;
+          var path = baseURL.toString();
+          var split = path.split("!");
+          try (final var jarFile = new JarFile(split[0].replace("jar:file:", ""))) {
+            entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+              var entry = entries.nextElement();
+              var entryName = entry.getName();
+              if (entryName.endsWith(".class")) {
+                loadClass(entryName, classLoader).ifPresent(repo::add);
+              }
+            }
+          }
         } else {
           throw new IllegalArgumentException("Not a valid package:" + baseURL);
         }
@@ -145,6 +162,18 @@ public class ClasspathResourceRepository {
     }
     newBaseDir += file.getName().concat("/");
     return newBaseDir;
+  }
+
+  private Optional<Class<?>> loadClass(String classPath, ClassLoader classLoader) {
+    try {
+      var fqClass = classPath.replace("/", ".").replace(CLASS_EXT, "");
+      return Optional.of(classLoader.loadClass(fqClass));
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (NoClassDefFoundError e) {
+      LOG.warn("Cannot load the class file: " + classPath, e);
+    }
+    return Optional.empty();
   }
 
   private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
