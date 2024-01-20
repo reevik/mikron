@@ -31,7 +31,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.ioc.MikronContext;
 import net.reevik.mikron.string.Str;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Repository implementation for classpath. It walks through the system and context
@@ -42,6 +45,7 @@ import net.reevik.mikron.string.Str;
  */
 public class ClasspathResourceRepository {
 
+  private final static Logger LOG = LoggerFactory.getLogger(ClasspathResourceRepository.class);
   public static final String DEFAULT_BASE_PKG = "/";
   public static final String[] SCAN_ALL = new String[]{".*"};
   private static final String PROTOCOL_FILE = "file";
@@ -109,8 +113,7 @@ public class ClasspathResourceRepository {
               var entry = entries.nextElement();
               var entryName = entry.getName();
               if (entryName.endsWith(".class")) {
-                Class<?> aClass = loadClass(entryName, classLoader);
-                repo.add(aClass);
+                loadClass(entryName, classLoader).ifPresent(repo::add);
               }
             }
           }
@@ -161,13 +164,16 @@ public class ClasspathResourceRepository {
     return newBaseDir;
   }
 
-  private Class<?> loadClass(String classPath, ClassLoader classLoader) {
+  private Optional<Class<?>> loadClass(String classPath, ClassLoader classLoader) {
     try {
       var fqClass = classPath.replace("/", ".").replace(CLASS_EXT, "");
-      return classLoader.loadClass(fqClass);
+      return Optional.of(classLoader.loadClass(fqClass));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
+    } catch (NoClassDefFoundError e) {
+      LOG.warn("Cannot load the class file: " + classPath, e);
     }
+    return Optional.empty();
   }
 
   private Class<?> loadClass(File parent, String baseDir, ClassLoader classLoader) {
