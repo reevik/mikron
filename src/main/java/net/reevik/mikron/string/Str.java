@@ -25,10 +25,19 @@ public class Str {
   /**
    * Returns true if the input is null or doesn't contain any character other than spaces.
    * @param input String input.
-   * @return If the {@link String} instance empty.
+   * @return If the {@link String} instance is empty.
    */
   public static boolean isEmpty(String input) {
     return input == null || BLANK.equals(input.trim());
+  }
+
+  /**
+   * Returns true if the input is NOT null and contains any character other than spaces.
+   * @param input String input.
+   * @return If the {@link String} instance is not empty.
+   */
+  public static boolean isNotEmpty(String input) {
+    return !isEmpty(input);
   }
 
   /**

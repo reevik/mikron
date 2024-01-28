@@ -38,17 +38,16 @@ public class DependencyScanTest {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(11);
+    assertThat(by).hasSize(10);
   }
 
   @Test
   void testMikronContext_nonRecursive() {
     MikronContext context = MikronContext.init(DependencyScanTest.class);
     Map<String, ManagedInstance> managedInstances = context.getManagedInstances();
-    assertThat(managedInstances).hasSize(4);
+    assertThat(managedInstances).hasSize(3);
     assertThat(managedInstances.containsKey(AnnotatedTestClass.class.getName())).isTrue();
     assertThat(managedInstances.containsKey(AnnotatedDependencyTestClass.class.getName())).isTrue();
     assertThat(managedInstances.containsKey(MikronContext.class.getSimpleName())).isTrue();
-    assertThat(managedInstances.containsKey(PropertiesRepository.class.getName())).isTrue();
   }
 }

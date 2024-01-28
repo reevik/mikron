@@ -16,9 +16,6 @@
 package net.reevik.mikron.configuration;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 public class ConfigurationBinding implements IConfigurationBinding {
 

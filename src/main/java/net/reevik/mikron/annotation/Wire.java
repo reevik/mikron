@@ -37,4 +37,6 @@ public @interface Wire {
    * @return The name of the managed instance.
    */
   String name() default "";
+
+  String filter() default "";
 }
