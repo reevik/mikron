@@ -19,12 +19,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
@@ -85,24 +81,30 @@ public class MikronContext {
   }
 
   private void initializeContext(Class<?> clazz) {
-    final var classpath = INSTANCE.initializeClasspath(clazz);
-    final var instances = INSTANCE.managedInstances;
-    instances.put(MikronContext.class.getSimpleName(),
-        new ManagedInstance(null, INSTANCE, MikronContext.class.getSimpleName()));
-    for (var annoRes : classpath.findClassesBy(Managed.class)) {
-      var componentName = INSTANCE.getName(annoRes);
+    var classpath = INSTANCE.initializeClasspath(clazz);
+    var instances = INSTANCE.managedInstances;
+    // Make MikronContext wire-able like any other managed instances.
+    registerSelf(instances);
+
+    for (var annotationResource : classpath.findClassesBy(Managed.class)) {
+      var componentName = INSTANCE.getName(annotationResource);
       var propBasedInstanceCreation = false;
       for (var propFile : propertiesRepository.getPropertyClassNames()) {
         if (propFile.startsWith(componentName) && !instances.containsKey(propFile)) {
-          instances.put(propFile, INSTANCE.initObject(annoRes, propFile));
+          instances.put(propFile, INSTANCE.initObject(annotationResource, propFile));
           propBasedInstanceCreation = true;
         }
       }
       if (!propBasedInstanceCreation) {
-        instances.put(componentName, INSTANCE.initObject(annoRes, componentName));
+        instances.put(componentName, INSTANCE.initObject(annotationResource, componentName));
       }
     }
     instances.values().forEach(ManagedInstance::wire);
+  }
+
+  private void registerSelf(Map<String, ManagedInstance> instances) {
+    instances.put(MikronContext.class.getSimpleName(),
+        new ManagedInstance(null, INSTANCE, MikronContext.class.getSimpleName()));
   }
 
   private String getName(AnnotationResource<Managed> annotationResource) {
