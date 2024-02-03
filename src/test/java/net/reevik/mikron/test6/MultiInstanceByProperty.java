@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron;
+package net.reevik.mikron.test6;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import net.reevik.mikron.annotation.Configurable;
+import net.reevik.mikron.annotation.Managed;
 
-import net.reevik.mikron.annotation.ManagedApplication;
-import net.reevik.mikron.ioc.DependencyWiringException;
-import net.reevik.mikron.ioc.MikronContext;
-import org.junit.jupiter.api.Test;
+@Managed(name="MultiInstanceByProperty")
+public class MultiInstanceByProperty {
 
-@ManagedApplication(packages = {"net.reevik.mikron.test5"})
-public class UncastableWiringTest {
+  @Configurable(name = "name")
+  private String name;
 
-
-  @Test
-  void uncastableWiringFails() {
-    assertThatThrownBy(() -> MikronContext.init(UncastableWiringTest.class)).isExactlyInstanceOf(
-        DependencyWiringException.class);
+  public String getName() {
+    return name;
   }
 }

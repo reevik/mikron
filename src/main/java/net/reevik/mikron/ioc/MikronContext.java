@@ -56,13 +56,14 @@ public class MikronContext {
    */
   private final Map<String, ManagedInstance> managedInstances = new HashMap<>();
 
-  @Wire
-  private PropertiesRepository propertiesRepository;
+  private final PropertiesRepository propertiesRepository;
 
   @Configurable(name = "key")
   private int key;
 
   private MikronContext() {
+    propertiesRepository = new PropertiesRepository();
+    propertiesRepository.loadAllProperties();
   }
 
   public synchronized static MikronContext init(Class<?> clazz) {
@@ -71,7 +72,6 @@ public class MikronContext {
     }
     INSTANCE.managedInstances.clear();
     INSTANCE.initializeContext(clazz);
-    INSTANCE.loadConfigurations();
     INSTANCE.wireConfigurations();
     return INSTANCE;
   }
@@ -80,17 +80,31 @@ public class MikronContext {
     INSTANCE.managedInstances.values().forEach(ManagedInstance::configSetup);
   }
 
-  private void loadConfigurations() {
-    INSTANCE.propertiesRepository.load();
+  private void initializeContext(Class<?> clazz) {
+    var classpath = INSTANCE.initializeClasspath(clazz);
+    var instances = INSTANCE.managedInstances;
+    // Make MikronContext wire-able like any other managed instances.
+    registerSelf(instances);
+
+    for (var annotationResource : classpath.findClassesBy(Managed.class)) {
+      var componentName = INSTANCE.getName(annotationResource);
+      var propBasedInstanceCreation = false;
+      for (var propFile : propertiesRepository.getPropertyClassNames()) {
+        if (propFile.startsWith(componentName) && !instances.containsKey(propFile)) {
+          instances.put(propFile, INSTANCE.initObject(annotationResource, propFile));
+          propBasedInstanceCreation = true;
+        }
+      }
+      if (!propBasedInstanceCreation) {
+        instances.put(componentName, INSTANCE.initObject(annotationResource, componentName));
+      }
+    }
+    instances.values().forEach(ManagedInstance::wire);
   }
 
-  private void initializeContext(Class<?> clazz) {
-    final var classpath = INSTANCE.initializeClasspath(clazz);
-    final var instances = INSTANCE.managedInstances;
-    instances.put(MikronContext.class.getSimpleName(), new ManagedInstance(null, INSTANCE));
-    final var annotationResources = classpath.findClassesBy(Managed.class);
-    annotationResources.forEach(r -> instances.put(INSTANCE.getName(r), INSTANCE.initObject(r)));
-    instances.values().forEach(ManagedInstance::wire);
+  private void registerSelf(Map<String, ManagedInstance> instances) {
+    instances.put(MikronContext.class.getSimpleName(),
+        new ManagedInstance(null, INSTANCE, MikronContext.class.getSimpleName()));
   }
 
   private String getName(AnnotationResource<Managed> annotationResource) {
@@ -112,11 +126,11 @@ public class MikronContext {
     return classpath;
   }
 
-  private ManagedInstance initObject(AnnotationResource<Managed> annotationResource) {
+  private ManagedInstance initObject(AnnotationResource<Managed> annotationResource, String name) {
     try {
       var clazz = annotationResource.clazz();
       var constructor = clazz.getConstructor();
-      return new ManagedInstance(annotationResource, constructor.newInstance());
+      return new ManagedInstance(annotationResource, constructor.newInstance(), name);
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
              NoSuchMethodException e) {
       throw new RuntimeException(e);
@@ -135,7 +149,8 @@ public class MikronContext {
     return Optional.empty();
   }
 
-  public record ManagedInstance(AnnotationResource<Managed> resource, Object instance) {
+  public record ManagedInstance(AnnotationResource<Managed> resource, Object instance,
+                                String name) {
 
     public void wire() {
       Arrays.stream(instance.getClass().getDeclaredFields())
@@ -152,13 +167,15 @@ public class MikronContext {
     private void wireDependency(final Field field) {
       var wireAnnotation = field.getAnnotation(Wire.class);
       var classKey = getDependencyName(field, wireAnnotation);
-      bindDependency(field, classKey);
+      var filter = wireAnnotation.filter();
+      bindDependency(field, classKey, filter);
     }
 
-    private void bindDependency(Field field, String classKey) {
+    private void bindDependency(Field field, String classKey, String filter) {
       try {
-        if (field.trySetAccessible() && INSTANCE.managedInstances.containsKey(classKey)) {
-          var managedInstance = INSTANCE.managedInstances.get(classKey);
+        var propClassName = getPropClassNameByFilter(classKey, filter);
+        if (field.trySetAccessible() && INSTANCE.managedInstances.containsKey(propClassName)) {
+          var managedInstance = INSTANCE.managedInstances.get(propClassName);
           field.setAccessible(true);
           field.set(instance, managedInstance.instance);
         }
@@ -169,16 +186,30 @@ public class MikronContext {
       }
     }
 
-    private void wireConfiguration(final Field field) {
-      var propertiesName = getPropertiesName();
-      var propertiesClassName = getConfigName(field);
-      bindConfig(field, propertiesName, propertiesClassName);
+    private static String getPropClassNameByFilter(String classKey, String filter) {
+      if (Str.isEmpty(filter)) {
+        return classKey;
+      }
+      var filterArr = filter.split("=");
+      var filterName = filterArr[0];
+      var filterValue = filterArr[1];
+      final var propRepo = INSTANCE.propertiesRepository;
+      final var propClassName = propRepo.getPropertyClassNames().stream()
+          .filter(className -> className.startsWith(classKey))
+          .filter(className -> filterValue.equals(
+              propRepo.getConfiguration(className).map(b -> b.get(filterName)).orElse(null)))
+          .findFirst().orElse(classKey);
+      return propClassName;
     }
 
-    private void bindConfig(Field field, String className, String propName) {
+    private void wireConfiguration(final Field field) {
+      bindConfig(field, getConfigName(field));
+    }
+
+    private void bindConfig(Field field, String propName) {
       try {
         if (field.trySetAccessible()) {
-          var managedConfig = INSTANCE.propertiesRepository.getConfiguration(className);
+          var managedConfig = INSTANCE.propertiesRepository.getConfiguration(name);
           var converter = field.getAnnotation(Configurable.class).converter();
           var bindingInstance = INSTANCE.getConverter(field.getType(), converter);
           var targetVal = bindingInstance.convert(managedConfig

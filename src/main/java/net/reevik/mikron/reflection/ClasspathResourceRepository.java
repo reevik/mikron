@@ -128,7 +128,10 @@ public class ClasspathResourceRepository {
 
   private void process(File file, String baseDir, ClassLoader classLoader, boolean recursive) {
     if (file.isFile() && isClassFile(file)) {
-      repo.add(loadClass(file, baseDir, classLoader));
+      Class<?> aClass = loadClass(file, baseDir, classLoader);
+      if (!repo.contains(aClass)) {
+        repo.add(aClass);
+      }
       return;
     }
 
