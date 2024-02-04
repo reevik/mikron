@@ -39,14 +39,14 @@ import java.lang.annotation.Target;
  *   }
  * </pre>
  *
- * The manage instances can be explicitly named. In this case, optional name parameter is used in
+ * The manage instances can be explicitly named. In this case, optional managedInstanceName parameter is used in
  * {@link Managed} and {@link Wire} annotations:
  *
  * <pre>
- *   &#064;Managed(name="This")
+ *   &#064;Managed(managedInstanceName="This")
  *   public class ManagedInstance {
  *
- *       &#064;Wire(name="That")
+ *       &#064;Wire(managedInstanceName="That")
  *       private AnotherManagedInstance another;
  *
  *       public void foo() {
@@ -62,9 +62,9 @@ import java.lang.annotation.Target;
 public @interface Managed {
 
   /**
-   * Optional name of the managed instance that can be used in {@link Wire} annotation.
+   * Optional managedInstanceName of the managed instance that can be used in {@link Wire} annotation.
    *
-   * @return The name of the managed instance.
+   * @return The managedInstanceName of the managed instance.
    */
   String name() default "";
 }

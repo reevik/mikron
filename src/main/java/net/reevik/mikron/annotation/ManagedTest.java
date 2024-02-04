@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Erhan Bagdemir. All rights reserved.
+ * Copyright (c) 2024 Erhan Bagdemir. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import net.reevik.mikron.test.MikronExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-/**
- * The annotation, which is used to mark the dependency injection point on the class fields. The
- * managedInstanceName of the object can be provided as parameter, if the managed instance is a named one. You
- * can managedInstanceName the managed entities in their {@link Managed} annotation.
- */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Wire {
+@Target(ElementType.TYPE)
+@ExtendWith(MikronExtension.class)
+public @interface ManagedTest {
 
-  /**
-   * Optional managedInstanceName of the managed instance which will be injected.
-   *
-   * @return The managedInstanceName of the managed instance.
-   */
-  String name() default "";
-
-  String filter() default "";
 }

@@ -47,56 +47,67 @@ public class MikronContext {
   private final static Logger LOG = LoggerFactory.getLogger(MikronContext.class);
 
   /**
-   * Singleton instance of the {@link MikronContext}.
-   */
-  private static MikronContext INSTANCE;
-
-  /**
    * The cache for the managed instances.
    */
   private final Map<String, ManagedInstance> managedInstances = new HashMap<>();
 
   private final PropertiesRepository propertiesRepository;
 
+  private final Class<?> applicationClass;
+
   @Configurable(name = "key")
   private int key;
 
-  private MikronContext() {
-    propertiesRepository = new PropertiesRepository();
-    propertiesRepository.loadAllProperties();
+  private MikronContext(Class<?> applicationClass) {
+    this.propertiesRepository = new PropertiesRepository();
+    this.propertiesRepository.loadAllProperties();
+    this.applicationClass = applicationClass;
   }
 
   public synchronized static MikronContext init(Class<?> clazz) {
-    if (INSTANCE == null) {
-      INSTANCE = new MikronContext();
-    }
-    INSTANCE.managedInstances.clear();
-    INSTANCE.initializeContext(clazz);
-    INSTANCE.wireConfigurations();
-    return INSTANCE;
+    var managedContext = new MikronContext(clazz);
+    managedContext.managedInstances.clear();
+    managedContext.initializeContext();
+    managedContext.wireConfigurations();
+    return managedContext;
+  }
+
+  /**
+   * Registers a new managed instance explicitly, which makes the context rescan the packages so
+   * that the new managed instance can be wired.
+   * <p/>
+   *
+   * @param instance Which is registered manually in the current context.
+   * @param name     The managedInstanceName of the managed instance.
+   */
+  public void register(Object instance, String name) {
+    managedInstances.clear();
+    managedInstances.put(name, new ManagedInstance(null, instance, name, this));
+    initializeContext();
+    wireConfigurations();
   }
 
   private void wireConfigurations() {
-    INSTANCE.managedInstances.values().forEach(ManagedInstance::configSetup);
+    managedInstances.values().forEach(ManagedInstance::configSetup);
   }
 
-  private void initializeContext(Class<?> clazz) {
-    var classpath = INSTANCE.initializeClasspath(clazz);
-    var instances = INSTANCE.managedInstances;
+  private void initializeContext() {
+    var classpath = initializeClasspath(applicationClass);
+    var instances = managedInstances;
     // Make MikronContext wire-able like any other managed instances.
     registerSelf(instances);
 
     for (var annotationResource : classpath.findClassesBy(Managed.class)) {
-      var componentName = INSTANCE.getName(annotationResource);
+      var componentName = getName(annotationResource);
       var propBasedInstanceCreation = false;
       for (var propFile : propertiesRepository.getPropertyClassNames()) {
         if (propFile.startsWith(componentName) && !instances.containsKey(propFile)) {
-          instances.put(propFile, INSTANCE.initObject(annotationResource, propFile));
+          instances.put(propFile, initObject(annotationResource, propFile));
           propBasedInstanceCreation = true;
         }
       }
       if (!propBasedInstanceCreation) {
-        instances.put(componentName, INSTANCE.initObject(annotationResource, componentName));
+        instances.put(componentName, initObject(annotationResource, componentName));
       }
     }
     instances.values().forEach(ManagedInstance::wire);
@@ -104,7 +115,7 @@ public class MikronContext {
 
   private void registerSelf(Map<String, ManagedInstance> instances) {
     instances.put(MikronContext.class.getSimpleName(),
-        new ManagedInstance(null, INSTANCE, MikronContext.class.getSimpleName()));
+        new ManagedInstance(null, this, MikronContext.class.getSimpleName(), this));
   }
 
   private String getName(AnnotationResource<Managed> annotationResource) {
@@ -130,7 +141,7 @@ public class MikronContext {
     try {
       var clazz = annotationResource.clazz();
       var constructor = clazz.getConstructor();
-      return new ManagedInstance(annotationResource, constructor.newInstance(), name);
+      return new ManagedInstance(annotationResource, constructor.newInstance(), name, this);
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
              NoSuchMethodException e) {
       throw new RuntimeException(e);
@@ -142,15 +153,21 @@ public class MikronContext {
   }
 
   public <T> Optional<T> getInstance(String name) {
-    if (INSTANCE.managedInstances.containsKey(name)) {
-      ManagedInstance managedInstance = INSTANCE.managedInstances.get(name);
+    if (managedInstances.containsKey(name)) {
+      ManagedInstance managedInstance = managedInstances.get(name);
       return Optional.of((T) managedInstance.instance);
     }
     return Optional.empty();
   }
 
-  public record ManagedInstance(AnnotationResource<Managed> resource, Object instance,
-                                String name) {
+  public PropertiesRepository getPropertiesRepository() {
+    return propertiesRepository;
+  }
+
+  public record ManagedInstance(AnnotationResource<Managed> annotationResource,
+                                Object instance,
+                                String managedInstanceName,
+                                MikronContext context) {
 
     public void wire() {
       Arrays.stream(instance.getClass().getDeclaredFields())
@@ -174,8 +191,8 @@ public class MikronContext {
     private void bindDependency(Field field, String classKey, String filter) {
       try {
         var propClassName = getPropClassNameByFilter(classKey, filter);
-        if (field.trySetAccessible() && INSTANCE.managedInstances.containsKey(propClassName)) {
-          var managedInstance = INSTANCE.managedInstances.get(propClassName);
+        if (field.trySetAccessible() && context.getManagedInstances().containsKey(propClassName)) {
+          var managedInstance = context.getManagedInstances().get(propClassName);
           field.setAccessible(true);
           field.set(instance, managedInstance.instance);
         }
@@ -186,20 +203,19 @@ public class MikronContext {
       }
     }
 
-    private static String getPropClassNameByFilter(String classKey, String filter) {
+    private String getPropClassNameByFilter(String classKey, String filter) {
       if (Str.isEmpty(filter)) {
         return classKey;
       }
       var filterArr = filter.split("=");
       var filterName = filterArr[0];
       var filterValue = filterArr[1];
-      final var propRepo = INSTANCE.propertiesRepository;
-      final var propClassName = propRepo.getPropertyClassNames().stream()
+      var propRepo = context.getPropertiesRepository();
+      return propRepo.getPropertyClassNames().stream()
           .filter(className -> className.startsWith(classKey))
           .filter(className -> filterValue.equals(
               propRepo.getConfiguration(className).map(b -> b.get(filterName)).orElse(null)))
           .findFirst().orElse(classKey);
-      return propClassName;
     }
 
     private void wireConfiguration(final Field field) {
@@ -209,9 +225,10 @@ public class MikronContext {
     private void bindConfig(Field field, String propName) {
       try {
         if (field.trySetAccessible()) {
-          var managedConfig = INSTANCE.propertiesRepository.getConfiguration(name);
+          var managedConfig = context.getPropertiesRepository().getConfiguration(
+              managedInstanceName);
           var converter = field.getAnnotation(Configurable.class).converter();
-          var bindingInstance = INSTANCE.getConverter(field.getType(), converter);
+          var bindingInstance = context.getConverter(field.getType(), converter);
           var targetVal = bindingInstance.convert(managedConfig
               .map(g -> g.get(propName))
               .orElse(null));
@@ -224,22 +241,22 @@ public class MikronContext {
       }
     }
 
-    // Properties name is used to associate the property file name and the managed class.
+    // Properties managedInstanceName is used to associate the property file managedInstanceName and the managed class.
     private String getPropertiesName() {
       String propsClassName;
       // Normally, managed resources in instance cache aren't expected to be null.
       // Except the case that if a managed object is manually added to the cache, for example,
       // MikronContext itself.
-      if (resource != null) {
-        // Properties class name can be provided in the @Managed annotation. It has precedence.
-        propsClassName = resource.annotation().name();
+      if (annotationResource != null) {
+        // Properties class managedInstanceName can be provided in the @Managed annotation. It has precedence.
+        propsClassName = annotationResource.annotation().name();
         if (Str.isEmpty(propsClassName)) {
-          // Otherwise, we use the simple name of the class.
-          propsClassName = resource.clazz().getSimpleName();
+          // Otherwise, we use the simple managedInstanceName of the class.
+          propsClassName = annotationResource.clazz().getSimpleName();
         }
       } else {
-        // If the registered resource is null, then we loop up for the properties with the simple
-        // class name of the instance.
+        // If the registered annotationResource is null, then we loop up for the properties with the simple
+        // class managedInstanceName of the instance.
         propsClassName = instance.getClass().getSimpleName();
       }
 
