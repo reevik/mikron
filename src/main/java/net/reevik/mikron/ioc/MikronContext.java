@@ -58,30 +58,48 @@ public class MikronContext {
 
   private final PropertiesRepository propertiesRepository;
 
+  private final Class<?> applicationClass;
+
   @Configurable(name = "key")
   private int key;
 
-  private MikronContext() {
-    propertiesRepository = new PropertiesRepository();
-    propertiesRepository.loadAllProperties();
+  private MikronContext(Class<?> applicationClass) {
+    this.propertiesRepository = new PropertiesRepository();
+    this.propertiesRepository.loadAllProperties();
+    this.applicationClass = applicationClass;
   }
 
   public synchronized static MikronContext init(Class<?> clazz) {
     if (INSTANCE == null) {
-      INSTANCE = new MikronContext();
+      INSTANCE = new MikronContext(clazz);
     }
     INSTANCE.managedInstances.clear();
-    INSTANCE.initializeContext(clazz);
+    INSTANCE.initializeContext();
     INSTANCE.wireConfigurations();
     return INSTANCE;
+  }
+
+  /**
+   * Registers a new managed instance explicitly, which makes the context rescan the packages so
+   * that the new managed instance can be wired.
+   * <p/>
+   *
+   * @param instance Which is registered manually in the current context.
+   * @param name     The name of the managed instance.
+   */
+  public void register(Object instance, String name) {
+    INSTANCE.managedInstances.clear();
+    INSTANCE.managedInstances.put(name, new ManagedInstance(null, instance, name));
+    INSTANCE.initializeContext();
+    INSTANCE.wireConfigurations();
   }
 
   private void wireConfigurations() {
     INSTANCE.managedInstances.values().forEach(ManagedInstance::configSetup);
   }
 
-  private void initializeContext(Class<?> clazz) {
-    var classpath = INSTANCE.initializeClasspath(clazz);
+  private void initializeContext() {
+    var classpath = INSTANCE.initializeClasspath(applicationClass);
     var instances = INSTANCE.managedInstances;
     // Make MikronContext wire-able like any other managed instances.
     registerSelf(instances);
