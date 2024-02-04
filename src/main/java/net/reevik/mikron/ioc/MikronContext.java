@@ -75,7 +75,7 @@ public class MikronContext {
   /**
    * Registers a new managed instance explicitly, which makes the context rescan the packages so
    * that the new managed instance can be wired.
-   * <p/>
+   * <p>
    *
    * @param instance Which is registered manually in the current context.
    * @param name     The managedInstanceName of the managed instance.
