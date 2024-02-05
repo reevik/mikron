@@ -19,7 +19,7 @@ A minimalistic IoC container for dependency injection and externalized configura
 <dependency>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.2.1</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
