@@ -94,7 +94,6 @@ public class MikronContext {
   private void postConstruct() {
     for (var managedInstance : managedInstances.values()) {
       Class<?> aClass = managedInstance.instance.getClass();
-      aClass.getMethods()
       for (Method declaredMethod : aClass.getDeclaredMethods()) {
         if (declaredMethod.isAnnotationPresent(PostConstruct.class)) {
           try {
