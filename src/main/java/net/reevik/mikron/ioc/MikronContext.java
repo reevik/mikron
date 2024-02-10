@@ -72,6 +72,7 @@ public class MikronContext {
     managedContext.managedInstances.clear();
     managedContext.initializeContext();
     managedContext.initializeConfigurations();
+    managedContext.postConstruct();
     return managedContext;
   }
 
