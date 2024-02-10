@@ -17,14 +17,17 @@ package net.reevik.mikron.ioc;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
+import net.reevik.mikron.annotation.PostConstruct;
 import net.reevik.mikron.annotation.Wire;
 import net.reevik.mikron.configuration.ConfigurationBinding;
 import net.reevik.mikron.configuration.PropertiesRepository;
@@ -68,7 +71,7 @@ public class MikronContext {
     var managedContext = new MikronContext(clazz);
     managedContext.managedInstances.clear();
     managedContext.initializeContext();
-    managedContext.wireConfigurations();
+    managedContext.initializeConfigurations();
     return managedContext;
   }
 
@@ -84,10 +87,32 @@ public class MikronContext {
     managedInstances.clear();
     managedInstances.put(name, new ManagedInstance(null, instance, name, this));
     initializeContext();
-    wireConfigurations();
+    initializeConfigurations();
+    postConstruct();
   }
 
-  private void wireConfigurations() {
+  private void postConstruct() {
+    for (var managedInstance : managedInstances.values()) {
+      Class<?> aClass = managedInstance.instance.getClass();
+      for (Method declaredMethod : aClass.getDeclaredMethods()) {
+        if (declaredMethod.isAnnotationPresent(PostConstruct.class)) {
+          try {
+            if (declaredMethod.getParameterCount() > 0) {
+              throw new IllegalArgumentException("@PostConstruct methods shouldn't take "
+                  + "parameters.");
+            }
+            declaredMethod.invoke(managedInstance.instance);
+          } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+          } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+  }
+
+  private void initializeConfigurations() {
     managedInstances.values().forEach(ManagedInstance::configSetup);
   }
 
@@ -239,28 +264,6 @@ public class MikronContext {
       } catch (InvocationTargetException | NoSuchMethodException | InstantiationException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    // Properties managedInstanceName is used to associate the property file managedInstanceName and the managed class.
-    private String getPropertiesName() {
-      String propsClassName;
-      // Normally, managed resources in instance cache aren't expected to be null.
-      // Except the case that if a managed object is manually added to the cache, for example,
-      // MikronContext itself.
-      if (annotationResource != null) {
-        // Properties class managedInstanceName can be provided in the @Managed annotation. It has precedence.
-        propsClassName = annotationResource.annotation().name();
-        if (Str.isEmpty(propsClassName)) {
-          // Otherwise, we use the simple managedInstanceName of the class.
-          propsClassName = annotationResource.clazz().getSimpleName();
-        }
-      } else {
-        // If the registered annotationResource is null, then we loop up for the properties with the simple
-        // class managedInstanceName of the instance.
-        propsClassName = instance.getClass().getSimpleName();
-      }
-
-      return propsClassName;
     }
 
     private String getConfigName(Field field) {

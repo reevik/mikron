@@ -38,7 +38,7 @@ public class DependencyScanTest {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(11);
+    assertThat(by).hasSize(12);
   }
 
   @Test
