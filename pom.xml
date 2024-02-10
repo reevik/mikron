@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.3.1-SNAPSHOT</version>
+  <version>0.3.1</version>
   <url>https://github.com/reevik/mikron.git</url>
   <name>mikron</name>
   <description>Mikron is a minimalist Java library for Dependency Injection.</description>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:reevik/mikron.git</connection>
     <developerConnection>scm:git:git@github.com:reevik/mikron.git</developerConnection>
     <url>${project.url}</url>
-    <tag>mikron-0.1.0</tag>
+    <tag>mikron-0.3.1</tag>
   </scm>
   <developers>
     <developer>
