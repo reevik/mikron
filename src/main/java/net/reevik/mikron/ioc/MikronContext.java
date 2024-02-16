@@ -21,13 +21,12 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
-import net.reevik.mikron.annotation.PostConstruct;
+import net.reevik.mikron.annotation.Initialize;
 import net.reevik.mikron.annotation.Wire;
 import net.reevik.mikron.configuration.ConfigurationBinding;
 import net.reevik.mikron.configuration.PropertiesRepository;
@@ -95,7 +94,7 @@ public class MikronContext {
     for (var managedInstance : managedInstances.values()) {
       Class<?> aClass = managedInstance.instance.getClass();
       for (Method declaredMethod : aClass.getDeclaredMethods()) {
-        if (declaredMethod.isAnnotationPresent(PostConstruct.class)) {
+        if (declaredMethod.isAnnotationPresent(Initialize.class)) {
           try {
             if (declaredMethod.getParameterCount() > 0) {
               throw new IllegalArgumentException("@PostConstruct methods shouldn't take "

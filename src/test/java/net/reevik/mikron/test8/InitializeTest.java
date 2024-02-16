@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron.annotation;
+package net.reevik.mikron.test8;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface PostConstruct {
+import net.reevik.mikron.annotation.ManagedApplication;
+import net.reevik.mikron.annotation.ManagedTest;
+import net.reevik.mikron.annotation.Wire;
+import org.junit.jupiter.api.Test;
+
+@ManagedApplication(packages = {"net.reevik.mikron.test8.*"})
+@ManagedTest
+public class InitializeTest {
+
+  @Wire
+  private PostConstructManagedInstance instance;
+
+  @Test
+  void testPostConstruct() {
+    assertThat(instance.getFieldUnderTest()).isEqualTo(42);
+  }
 }

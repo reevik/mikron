@@ -16,14 +16,14 @@
 package net.reevik.mikron.test8;
 
 import net.reevik.mikron.annotation.Managed;
-import net.reevik.mikron.annotation.PostConstruct;
+import net.reevik.mikron.annotation.Initialize;
 
 @Managed
 public class PostConstructManagedInstance {
 
   private int fieldUnderTest;
 
-  @PostConstruct
+  @Initialize
   public void postConstruct() {
     fieldUnderTest = 42;
   }
