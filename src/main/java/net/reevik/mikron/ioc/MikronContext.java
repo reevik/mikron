@@ -15,6 +15,7 @@
  */
 package net.reevik.mikron.ioc;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.annotation.CleanUp;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
@@ -44,7 +46,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Erhan Bagdemir
  */
-public class MikronContext {
+public class MikronContext implements AutoCloseable {
 
   private final static Logger LOG = LoggerFactory.getLogger(MikronContext.class);
 
@@ -90,27 +92,6 @@ public class MikronContext {
     postConstruct();
   }
 
-  private void postConstruct() {
-    for (var managedInstance : managedInstances.values()) {
-      Class<?> aClass = managedInstance.instance.getClass();
-      for (Method declaredMethod : aClass.getDeclaredMethods()) {
-        if (declaredMethod.isAnnotationPresent(Initialize.class)) {
-          try {
-            if (declaredMethod.getParameterCount() > 0) {
-              throw new IllegalArgumentException("@PostConstruct methods shouldn't take "
-                  + "parameters.");
-            }
-            declaredMethod.invoke(managedInstance.instance);
-          } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-          } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-  }
-
   private void initializeConfigurations() {
     managedInstances.values().forEach(ManagedInstance::configSetup);
   }
@@ -120,7 +101,6 @@ public class MikronContext {
     var instances = managedInstances;
     // Make MikronContext wire-able like any other managed instances.
     registerSelf(instances);
-
     for (var annotationResource : classpath.findClassesBy(Managed.class)) {
       var componentName = getName(annotationResource);
       var propBasedInstanceCreation = false;
@@ -154,8 +134,8 @@ public class MikronContext {
     final ClasspathResourceRepository classpath;
     final var declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
     if (declaredAnnotation == null) {
-      throw new ApplicationInitializationException("No managed application found with "
-          + "@ManagedApplication annotation.");
+      throw new ApplicationInitializationException(
+          "No managed application found with " + "@ManagedApplication annotation.");
     }
     classpath = ClasspathResourceRepository.of(declaredAnnotation.packages());
     return classpath;
@@ -188,15 +168,41 @@ public class MikronContext {
     return propertiesRepository;
   }
 
-  public record ManagedInstance(AnnotationResource<Managed> annotationResource,
-                                Object instance,
-                                String managedInstanceName,
-                                MikronContext context) {
+  private void postConstruct() {
+    executeIfAnnotated(Initialize.class);
+  }
+
+  @Override
+  public void close() throws Exception {
+    executeIfAnnotated(CleanUp.class);
+  }
+
+  private void executeIfAnnotated(Class<? extends Annotation> annotation) {
+    for (var managedInstance : managedInstances.values()) {
+      Class<?> aClass = managedInstance.instance.getClass();
+      for (Method declaredMethod : aClass.getDeclaredMethods()) {
+        if (declaredMethod.isAnnotationPresent(annotation)) {
+          try {
+            if (declaredMethod.getParameterCount() > 0) {
+              throw new IllegalArgumentException(
+                  "@Initialize/@CleanUp methods shouldn't take " + "parameters.");
+            }
+            declaredMethod.invoke(managedInstance.instance);
+          } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+  }
+
+
+  public record ManagedInstance(AnnotationResource<Managed> annotationResource, Object instance,
+                                String managedInstanceName, MikronContext context) {
 
     public void wire() {
       Arrays.stream(instance.getClass().getDeclaredFields())
-          .filter(field -> field.isAnnotationPresent(Wire.class))
-          .forEach(this::wireDependency);
+          .filter(field -> field.isAnnotationPresent(Wire.class)).forEach(this::wireDependency);
     }
 
     public void configSetup() {
@@ -236,9 +242,9 @@ public class MikronContext {
       var filterValue = filterArr[1];
       var propRepo = context.getPropertiesRepository();
       return propRepo.getPropertyClassNames().stream()
-          .filter(className -> className.startsWith(classKey))
-          .filter(className -> filterValue.equals(
-              propRepo.getConfiguration(className).map(b -> b.get(filterName)).orElse(null)))
+          .filter(className -> className.startsWith(classKey)).filter(
+              className -> filterValue.equals(
+                  propRepo.getConfiguration(className).map(b -> b.get(filterName)).orElse(null)))
           .findFirst().orElse(classKey);
     }
 
@@ -249,13 +255,12 @@ public class MikronContext {
     private void bindConfig(Field field, String propName) {
       try {
         if (field.trySetAccessible()) {
-          var managedConfig = context.getPropertiesRepository().getConfiguration(
-              managedInstanceName);
+          var managedConfig = context.getPropertiesRepository()
+              .getConfiguration(managedInstanceName);
           var converter = field.getAnnotation(Configurable.class).converter();
           var bindingInstance = context.getConverter(field.getType(), converter);
-          var targetVal = bindingInstance.convert(managedConfig
-              .map(g -> g.get(propName))
-              .orElse(null));
+          var targetVal = bindingInstance.convert(
+              managedConfig.map(g -> g.get(propName)).orElse(null));
           new ConfigurationBinding().bind(field, instance, targetVal);
         }
       } catch (IllegalAccessException e) {
@@ -277,8 +282,7 @@ public class MikronContext {
     }
   }
 
-  private TypeConverter getConverter(Class<?> clazz,
-      Class<? extends TypeConverter> converter)
+  private TypeConverter getConverter(Class<?> clazz, Class<? extends TypeConverter> converter)
       throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
     try {
       return converter.getConstructor(Class.class).newInstance(clazz);
