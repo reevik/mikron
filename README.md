@@ -32,9 +32,9 @@ You will use Mikron annotations to initialize the Mikron context in your Java ap
 public class Main {
 
   public static void main(String[] args) {
-    Optional<AnnotatedTestClass> instance;
+    Optional<AnnotatedManagedClass> instance;
     try (MikronContext context = MikronContext.init(MikronContextTest.class)) {
-      instance = context.getInstance(ManagedDeepClass.class.getName());
+      instance = context.getInstance(AnnotatedManagedClass.class.getName());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
