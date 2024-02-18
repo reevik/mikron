@@ -12,7 +12,7 @@
 [![Gitter](https://img.shields.io/badge/Chat-gitter%20-green.svg)](https://matrix.to/#/#mikron:gitter.im)
 </div>
 
-A minimalistic IoC container for dependency injection and externalized configuration management. Mikron is a small library which enables you to leverage the convenience of dependency injection and configuration management in non-enterprise applications as well. The maven-based project is still under development. If you want to try out, you can clone and build it from the source. 
+Mikron is a minimalistic IoC container for dependency injection and externalized configuration management. It's a small Java library that allows you to harness the convenience of dependency injection and configuration management. This Maven-based project is still under development. If you want to try it out, you can add the following dependency:
 
 ```xml
 
@@ -25,20 +25,24 @@ A minimalistic IoC container for dependency injection and externalized configura
 
 ## Usage
 
-To initialize the Mikron context in your Java application, you will use Mikron annotations. In the following example, we activate the context and make the framework search for managed instances in the specified package:
+You will use Mikron annotations to initialize the Mikron context in your Java application. In the following example, we declare a "Mikron Application" by using `@ManagedApplication` annotation, and instantiate the Mikron context. MikronContext is the IoC implementation where managed instances reside:
 
 ```java
 @ManagedApplication(packages = {"your.package.to.scan"})
 public class Main {
 
   public static void main(String[] args) {
-    // Start the Mikron context.
-    MikronContext.init(Main.class);
+    Optional<AnnotatedTestClass> instance;
+    try (MikronContext context = MikronContext.init(MikronContextTest.class)) {
+      instance = context.getInstance(ManagedDeepClass.class.getName());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }
 ```
 
-Mikron context is the container where the managed instances reside and the dependencies between such objects get wired. To define managed instances, you will use `@Managed` annotation:
+Mikron context is the container where the managed instances reside and the dependencies between managed objects get wired. You will use `@Managed` annotation to declare managed instances:
 
 ```java
 @Managed
@@ -49,7 +53,9 @@ public class ManagedObject {
 }
 ```
 
-and `@Wire` annotation to introduce dependency injection point.
+and the `@Wire` annotation introduces dependency injection point.
+
+You can check out the [Mikron Wiki](https://github.com/reevik/mikron/wiki) for the documentation.
 
 ## Bugs and Feedback
 
