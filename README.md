@@ -55,7 +55,9 @@ public class ManagedObject {
 
 and the `@Wire` annotation introduces dependency injection point.
 
-You can check out the [Mikron Wiki](https://github.com/reevik/mikron/wiki) for the documentation.
+## Documentation
+
+You can check out the [Mikron Wiki](https://github.com/reevik/mikron/wiki) for the documentation and [API Docs](https://reevik.github.io/mikron/).
 
 ## Bugs and Feedback
 
