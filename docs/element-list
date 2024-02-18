@@ -4,3 +4,4 @@ net.reevik.mikron.configuration
 net.reevik.mikron.ioc
 net.reevik.mikron.reflection
 net.reevik.mikron.string
+net.reevik.mikron.test
