@@ -48,12 +48,15 @@ Mikron context is the container where the managed instances reside and the depen
 @Managed
 public class ManagedObject {
 
+  @Configurable(name = "config.temp")
+  private Integer temperature;
+
   @Wire
   private ManagedDependency managedDependency;
 }
 ```
 
-and the `@Wire` annotation introduces dependency injection point.
+and the `@Wire` annotation introduces dependency injection point whereas `@Configurable` annotation is used to inject externalized configurations. 
 
 ## Documentation
 
