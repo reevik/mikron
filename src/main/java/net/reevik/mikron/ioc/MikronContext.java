@@ -98,27 +98,33 @@ public class MikronContext implements AutoCloseable {
 
   private void initializeContext() {
     var classpath = initializeClasspath(applicationClass);
-    var instances = managedInstances;
-    // Make MikronContext wire-able like any other managed instances.
-    registerSelf(instances);
+    // Make "MikronContext" wireable like any other developer managed instances.
+    registerSelf();
     for (var annotationResource : classpath.findClassesBy(Managed.class)) {
       var componentName = getName(annotationResource);
-      var propBasedInstanceCreation = false;
-      for (var propFile : propertiesRepository.getPropertyClassNames()) {
-        if (propFile.startsWith(componentName) && !instances.containsKey(propFile)) {
-          instances.put(propFile, initObject(annotationResource, propFile));
-          propBasedInstanceCreation = true;
-        }
-      }
+      var propBasedInstanceCreation = createInstancePerPropertyFile(annotationResource, componentName);
+      // It is possible that there is no configuration file at all, so we need to instantiate the
+      // component by name.
       if (!propBasedInstanceCreation) {
-        instances.put(componentName, initObject(annotationResource, componentName));
+        managedInstances.put(componentName, initObject(annotationResource, componentName));
       }
     }
-    instances.values().forEach(ManagedInstance::wire);
+    managedInstances.values().forEach(ManagedInstance::wire);
   }
 
-  private void registerSelf(Map<String, ManagedInstance> instances) {
-    instances.put(MikronContext.class.getSimpleName(),
+  private boolean createInstancePerPropertyFile(AnnotationResource<Managed> annotationResource, String componentName) {
+    var propBasedInstanceCreation = false;
+    for (var propFile : propertiesRepository.getPropertyClassNames()) {
+      if (propFile.startsWith(componentName) && !managedInstances.containsKey(propFile)) {
+        managedInstances.put(propFile, initObject(annotationResource, propFile));
+        propBasedInstanceCreation = true;
+      }
+    }
+    return propBasedInstanceCreation;
+  }
+
+  private void registerSelf() {
+    managedInstances.put(MikronContext.class.getSimpleName(),
         new ManagedInstance(null, this, MikronContext.class.getSimpleName(), this));
   }
 
@@ -195,7 +201,6 @@ public class MikronContext implements AutoCloseable {
       }
     }
   }
-
 
   public record ManagedInstance(AnnotationResource<Managed> annotationResource, Object instance,
                                 String managedInstanceName, MikronContext context) {
