@@ -20,13 +20,17 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Install dependencies
-        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      - name: Maven Build
+        run: mvn -e clean install -Dmaven.javadoc.skip=true -B -V
       - name: Run tests and collect coverage
         run: mvn -B verify
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          files: ./target/jacoco.exec
+          flags: unittests
+          name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }} # required
+          verbose: true # optional (default = false)
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          verbose: true

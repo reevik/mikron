@@ -27,6 +27,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -227,6 +228,14 @@ public class ClasspathResourceRepository {
         .flatMap(m -> Arrays.stream(m.clazz().getFields())
             .filter(field -> field.isAnnotationPresent(fieldAnnotation)))
         .toList();
+  }
+
+  public <T extends Annotation> Set<Class<?>> findImplementingClasses(Class<?> parentType,
+      Class<T> annotation) {
+    return findClassesBy(annotation).stream()
+        .map(AnnotationResource::clazz)
+        .filter(parentType::isAssignableFrom)
+        .collect(Collectors.toSet());
   }
 
   record ClassFile(String packageName, String classFileName) {

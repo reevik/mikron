@@ -39,4 +39,6 @@ public @interface Wire {
   String name() default "";
 
   String filter() default "";
+
+  Scope scope() default Scope.STATIC;
 }
