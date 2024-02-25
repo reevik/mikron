@@ -15,7 +15,20 @@
  */
 package net.reevik.mikron.annotation;
 
+/**
+ * Wiring scope. Static indicates that the dependency injection is performed during context
+ * bootstrap once the application starts. The scope "access" gets a new instance created on
+ * every access.
+ */
 public enum Scope {
+
+  /**
+   * Static wiring happens once when the Mikron context starts.
+   */
   STATIC,
+
+  /**
+   * A new managed object instance gets injected on access to the dependency methods.
+   */
   ACCESS
 }

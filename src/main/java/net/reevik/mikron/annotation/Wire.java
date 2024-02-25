@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 
 /**
  * The annotation, which is used to mark the dependency injection point on the class fields. The
- * managedInstanceName of the object can be provided as parameter, if the managed instance is a named one. You
- * can managedInstanceName the managed entities in their {@link Managed} annotation.
+ * managedInstanceName of the object can be provided as parameter, if the managed instance is a
+ * named one. You can managedInstanceName the managed entities in their {@link Managed} annotation.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -32,13 +32,28 @@ import java.lang.annotation.Target;
 public @interface Wire {
 
   /**
-   * Optional managedInstanceName of the managed instance which will be injected.
+   * Optional. The name of the managed instance. Managed instances are annotated with
+   * {@link Managed} annotation which can take "name" as optional annotation parameter. Dependency
+   * injection points may declare managed instance names, which need to be injected. If the
+   * dependency is not found, the value remains null.
    *
    * @return The managedInstanceName of the managed instance.
    */
   String name() default "";
 
+  /**
+   * Configuration filter to identify the properties file.
+   *
+   * @return The configuration file filter.
+   */
   String filter() default "";
 
+  /**
+   * Dependency injection scope. Static indicates that the dependencies get injected at start-up
+   * once the context is built. {@link Scope#ACCESS} means that a new instance of the dependency
+   * must get created every time the client access the methods of it.
+   *
+   * @return Dependency injection scope.
+   */
   Scope scope() default Scope.STATIC;
 }
