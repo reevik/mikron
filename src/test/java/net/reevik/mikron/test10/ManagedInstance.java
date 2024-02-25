@@ -26,10 +26,17 @@ public class ManagedInstance {
   private IDynamicManagedDependency dynamicManagedDependency;
 
   @Wire(scope = Scope.STATIC, name = "ManagedDependency")
+  private IDynamicManagedDependency staticBoundDynamicManagedDependencyByName;
+
+  @Wire
   private IDynamicManagedDependency staticBoundDynamicManagedDependency;
 
   public IDynamicManagedDependency getDynamicManagedDependency() {
     return dynamicManagedDependency;
+  }
+
+  public IDynamicManagedDependency getStaticBoundDynamicManagedDependencyByName() {
+    return staticBoundDynamicManagedDependencyByName;
   }
 
   public IDynamicManagedDependency getStaticBoundDynamicManagedDependency() {

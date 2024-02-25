@@ -19,6 +19,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
@@ -64,15 +66,30 @@ public class ManagedInstance {
       var wire = field.getAnnotation(Wire.class);
       var componentNameOnField = getDependencyName(field, wire);
       var propClassName = getComponentName(componentNameOnField, wire.filter());
-      if (field.trySetAccessible() && context.getManagedInstances().containsKey(propClassName)) {
-        var managedInstance = context.getManagedInstances().get(propClassName);
-        field.setAccessible(true);
-        field.set(instance, managedInstance.getInstance());
+      if (field.trySetAccessible()) {
+        if (context.getManagedInstances().containsKey(propClassName)) {
+          var managedInstance = context.getManagedInstances().get(propClassName);
+          field.set(instance, managedInstance.getInstance());
+        } else {
+          injectFirstAssignable(field);
+        }
       }
     } catch (IllegalAccessException e) {
       LOG.error("Cannot wire the field={} Reason={}", field, e.getMessage());
     } catch (IllegalArgumentException e) {
       throw new DependencyWiringException(e);
+    }
+  }
+
+  private void injectFirstAssignable(Field field) throws IllegalAccessException {
+    var type = field.getType();
+    var candidates = context.getManagedInstances()
+        .values().stream()
+        .filter(s -> type.isAssignableFrom(s.instance.getClass()))
+        .toList();
+    if (candidates.size() == 1) {
+      ManagedInstance firstCandidate = candidates.iterator().next();
+      field.set(instance, firstCandidate.getInstance());
     }
   }
 

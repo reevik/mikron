@@ -31,7 +31,7 @@ public class WireOnAccessTest {
   private ManagedInstance managedInstance;
 
   @Test
-  void dynamicWiring() {
+  void dynamicWiringByName() {
     assertThat(managedInstance).isNotNull();
     assertThat(managedInstance.getDynamicManagedDependency()).isNotNull();
     IDynamicManagedDependency dynamicManagedDependency = managedInstance.getDynamicManagedDependency();
@@ -39,6 +39,8 @@ public class WireOnAccessTest {
     IDynamicManagedDependency instance1 = dynamicManagedDependency.execute();
     IDynamicManagedDependency instance2 = dynamicManagedDependency.execute();
     assertThat(instance1).isNotEqualTo(instance2);
+    assertThat(managedInstance.getStaticBoundDynamicManagedDependencyByName()).isNotNull();
+    assertThat(managedInstance.getStaticBoundDynamicManagedDependencyByName()).isNotInstanceOf(Proxy.class);
     assertThat(managedInstance.getStaticBoundDynamicManagedDependency()).isNotNull();
     assertThat(managedInstance.getStaticBoundDynamicManagedDependency()).isNotInstanceOf(Proxy.class);
   }
