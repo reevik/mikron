@@ -16,21 +16,19 @@
 package net.reevik.mikron.ioc;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.CleanUp;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.annotation.Initialize;
-import net.reevik.mikron.annotation.Wire;
-import net.reevik.mikron.configuration.ConfigurationBinding;
 import net.reevik.mikron.configuration.PropertiesRepository;
 import net.reevik.mikron.configuration.TypeConverter;
 import net.reevik.mikron.reflection.ClasspathResourceRepository;
@@ -54,10 +52,8 @@ public class MikronContext implements AutoCloseable {
    * The cache for the managed instances.
    */
   private final Map<String, ManagedInstance> managedInstances = new HashMap<>();
-
   private final PropertiesRepository propertiesRepository;
-
-  private final Class<?> applicationClass;
+  private final ClasspathResourceRepository classpathResourceRepository;
 
   @Configurable(name = "key")
   private int key;
@@ -65,10 +61,10 @@ public class MikronContext implements AutoCloseable {
   private MikronContext(Class<?> applicationClass) {
     this.propertiesRepository = new PropertiesRepository();
     this.propertiesRepository.loadAllProperties();
-    this.applicationClass = applicationClass;
+    this.classpathResourceRepository = initializeClasspath(applicationClass);
   }
 
-  public synchronized static MikronContext init(Class<?> clazz) {
+  public static MikronContext init(Class<?> clazz) {
     var managedContext = new MikronContext(clazz);
     managedContext.managedInstances.clear();
     managedContext.initializeContext();
@@ -97,10 +93,9 @@ public class MikronContext implements AutoCloseable {
   }
 
   private void initializeContext() {
-    var classpath = initializeClasspath(applicationClass);
     // Make "MikronContext" wireable like any other developer managed instances.
     registerSelf();
-    for (var annotationResource : classpath.findClassesBy(Managed.class)) {
+    for (var annotationResource : classpathResourceRepository.findClassesBy(Managed.class)) {
       var componentName = getName(annotationResource);
       var propBasedInstanceCreation = createInstancePerPropertyFile(annotationResource, componentName);
       // It is possible that there is no configuration file at all, so we need to instantiate the
@@ -112,7 +107,8 @@ public class MikronContext implements AutoCloseable {
     managedInstances.values().forEach(ManagedInstance::wire);
   }
 
-  private boolean createInstancePerPropertyFile(AnnotationResource<Managed> annotationResource, String componentName) {
+  private boolean createInstancePerPropertyFile(AnnotationResource<Managed> annotationResource,
+      String componentName) {
     var propBasedInstanceCreation = false;
     for (var propFile : propertiesRepository.getPropertyClassNames()) {
       if (propFile.startsWith(componentName) && !managedInstances.containsKey(propFile)) {
@@ -158,6 +154,46 @@ public class MikronContext implements AutoCloseable {
     }
   }
 
+  ManagedInstance initObjectByAccess(Class<?> targetType, String targetName) {
+    try {
+      if (!targetType.isInterface() && !targetType.isAnnotationPresent(Managed.class)) {
+        throw new IllegalWiringException("You can only wire managed objects with @Managed "
+            + "annotation on them.");
+      }
+
+      Class<?> managedType = null;
+      if (targetType.isInterface()) {
+
+        Set<Class<?>> implementingManagedInstances = findImplementingManagedInstances(targetType);
+        if (implementingManagedInstances.size() == 1 && Str.isEmpty(targetName)) {
+          managedType = implementingManagedInstances.iterator().next();
+        }
+
+        if (implementingManagedInstances.size() >= 1 && Str.isNotEmpty(targetName)) {
+          Optional<Class<?>> matchingNamedManagedInstance =
+              implementingManagedInstances.stream().filter(managedClass ->
+                  targetName.equals(managedClass.getAnnotation(Managed.class).name())).findFirst();
+          managedType =
+              matchingNamedManagedInstance.orElseThrow(MatchingDependencyNotFoundException::new);
+        }
+
+        if (managedType == null) {
+          throw new MatchingDependencyNotFoundException();
+        }
+
+      } else {
+        managedType = targetType;
+      }
+      var managedAnnotation = managedType.getAnnotation(Managed.class);
+      var annotationResource = new AnnotationResource<>(managedAnnotation, managedType);
+      var constructor = managedType.getConstructor();
+      return new ManagedInstance(annotationResource, constructor.newInstance(), targetName, this);
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public Map<String, ManagedInstance> getManagedInstances() {
     return managedInstances;
   }
@@ -165,13 +201,17 @@ public class MikronContext implements AutoCloseable {
   public <T> Optional<T> getInstance(String name) {
     if (managedInstances.containsKey(name)) {
       ManagedInstance managedInstance = managedInstances.get(name);
-      return Optional.of((T) managedInstance.instance);
+      return Optional.of((T) managedInstance.getInstance());
     }
     return Optional.empty();
   }
 
   public PropertiesRepository getPropertiesRepository() {
     return propertiesRepository;
+  }
+
+  public Optional<Properties> getConfiguration(String configurationSourceKey) {
+    return propertiesRepository.getConfiguration(configurationSourceKey);
   }
 
   private void postConstruct() {
@@ -185,7 +225,7 @@ public class MikronContext implements AutoCloseable {
 
   private void executeIfAnnotated(Class<? extends Annotation> annotation) {
     for (var managedInstance : managedInstances.values()) {
-      Class<?> aClass = managedInstance.instance.getClass();
+      Class<?> aClass = managedInstance.getInstance().getClass();
       for (Method declaredMethod : aClass.getDeclaredMethods()) {
         if (declaredMethod.isAnnotationPresent(annotation)) {
           try {
@@ -193,7 +233,7 @@ public class MikronContext implements AutoCloseable {
               throw new IllegalArgumentException(
                   "@Initialize/@CleanUp methods shouldn't take " + "parameters.");
             }
-            declaredMethod.invoke(managedInstance.instance);
+            declaredMethod.invoke(managedInstance.getInstance());
           } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
           }
@@ -202,92 +242,17 @@ public class MikronContext implements AutoCloseable {
     }
   }
 
-  public record ManagedInstance(AnnotationResource<Managed> annotationResource, Object instance,
-                                String managedInstanceName, MikronContext context) {
-
-    public void wire() {
-      Arrays.stream(instance.getClass().getDeclaredFields())
-          .filter(field -> field.isAnnotationPresent(Wire.class)).forEach(this::wireDependency);
-    }
-
-    public void configSetup() {
-      Arrays.stream(instance.getClass().getDeclaredFields())
-          .filter(field -> field.isAnnotationPresent(Configurable.class))
-          .forEach(this::wireConfiguration);
-    }
-
-    private void wireDependency(final Field field) {
-      var wireAnnotation = field.getAnnotation(Wire.class);
-      var classKey = getDependencyName(field, wireAnnotation);
-      var filter = wireAnnotation.filter();
-      bindDependency(field, classKey, filter);
-    }
-
-    private void bindDependency(Field field, String classKey, String filter) {
-      try {
-        var propClassName = getPropClassNameByFilter(classKey, filter);
-        if (field.trySetAccessible() && context.getManagedInstances().containsKey(propClassName)) {
-          var managedInstance = context.getManagedInstances().get(propClassName);
-          field.setAccessible(true);
-          field.set(instance, managedInstance.instance);
-        }
-      } catch (IllegalAccessException e) {
-        LOG.error("Cannot wire the field={} Reason={}", classKey, e.getMessage());
-      } catch (IllegalArgumentException e) {
-        throw new DependencyWiringException(e);
-      }
-    }
-
-    private String getPropClassNameByFilter(String classKey, String filter) {
-      if (Str.isEmpty(filter)) {
-        return classKey;
-      }
-      var filterArr = filter.split("=");
-      var filterName = filterArr[0];
-      var filterValue = filterArr[1];
-      var propRepo = context.getPropertiesRepository();
-      return propRepo.getPropertyClassNames().stream()
-          .filter(className -> className.startsWith(classKey)).filter(
-              className -> filterValue.equals(
-                  propRepo.getConfiguration(className).map(b -> b.get(filterName)).orElse(null)))
-          .findFirst().orElse(classKey);
-    }
-
-    private void wireConfiguration(final Field field) {
-      bindConfig(field, getConfigName(field));
-    }
-
-    private void bindConfig(Field field, String propName) {
-      try {
-        if (field.trySetAccessible()) {
-          var managedConfig = context.getPropertiesRepository()
-              .getConfiguration(managedInstanceName);
-          var converter = field.getAnnotation(Configurable.class).converter();
-          var bindingInstance = context.getConverter(field.getType(), converter);
-          var targetVal = bindingInstance.convert(
-              managedConfig.map(g -> g.get(propName)).orElse(null));
-          new ConfigurationBinding().bind(field, instance, targetVal);
-        }
-      } catch (IllegalAccessException e) {
-        LOG.error("Cannot wire the field={} Reason={}", propName, e.getMessage());
-      } catch (InvocationTargetException | NoSuchMethodException | InstantiationException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    private String getConfigName(Field field) {
-      var annotation = field.getAnnotation(Configurable.class);
-      var name = annotation.name();
-      return Str.isEmpty(name) ? field.getType().getName() : name;
-    }
-
-    private String getDependencyName(Field field, Wire annotation) {
-      var name = annotation.name();
-      return Str.isEmpty(name) ? field.getType().getName() : name;
-    }
+  /**
+   * Find and return the implementing managed instances.
+   *
+   * @param parentType Parent type, e.g., an interface declaring a concrete managed instance.
+   * @return All implementing concrete managed instances.
+   */
+  public Set<Class<?>> findImplementingManagedInstances(Class<?> parentType) {
+    return classpathResourceRepository.findImplementingClasses(parentType, Managed.class);
   }
 
-  private TypeConverter getConverter(Class<?> clazz, Class<? extends TypeConverter> converter)
+  TypeConverter getConverter(Class<?> clazz, Class<? extends TypeConverter> converter)
       throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
     try {
       return converter.getConstructor(Class.class).newInstance(clazz);

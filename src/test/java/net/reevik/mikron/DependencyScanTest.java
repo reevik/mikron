@@ -22,9 +22,8 @@ import java.util.Map;
 import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
-import net.reevik.mikron.configuration.PropertiesRepository;
+import net.reevik.mikron.ioc.ManagedInstance;
 import net.reevik.mikron.ioc.MikronContext;
-import net.reevik.mikron.ioc.MikronContext.ManagedInstance;
 import net.reevik.mikron.reflection.ClasspathResourceRepository;
 import net.reevik.mikron.test.AnnotatedDependencyTestClass;
 import net.reevik.mikron.test.AnnotatedTestClass;
@@ -38,7 +37,7 @@ public class DependencyScanTest {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
     List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(13);
+    assertThat(by).hasSize(15);
   }
 
   @Test
