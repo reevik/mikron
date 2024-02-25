@@ -24,6 +24,8 @@ jobs:
         run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
       - name: Run tests and collect coverage
         run: mvn -B verify
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v2.2.3
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         env:
