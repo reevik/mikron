@@ -23,13 +23,16 @@ import java.lang.annotation.Target;
 import net.reevik.mikron.configuration.DefaultTypeConverter;
 import net.reevik.mikron.configuration.TypeConverter;
 
+/**
+ * Annotation used to define configuration injection points.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Configurable {
 
   /**
-   * Name of the configuration.
+   * Name of the configuration in the configuration source, e.g., properties file.
    *
    * @return Name of the configuration.
    */

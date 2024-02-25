@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 
 /**
  * The annotation, which is used to mark the dependency injection point on the class fields. The
- * managedInstanceName of the object can be provided as parameter, if the managed instance is a
- * named one. You can managedInstanceName the managed entities in their {@link Managed} annotation.
+ * name of the object can be provided as parameter, if the managed instance is a named one. You
+ * can name managed entities in the {@link Managed} annotation.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

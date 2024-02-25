@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * A managed instance, of which life cycle is under the control of the IoC microkernel. Other
  * managed instances which declare managed entities as a dependency by using {@link Wire} on their
- * class fields, may directly access them without explicitly instantiating them:
+ * class fields, may directly use such without explicitly instantiating them:
  *
  * <pre>
  *   &#064;Managed
@@ -39,8 +39,9 @@ import java.lang.annotation.Target;
  *   }
  * </pre>
  *
- * The manage instances can be explicitly named. In this case, optional managedInstanceName parameter is used in
- * {@link Managed} and {@link Wire} annotations:
+ * The manage instances can be explicitly named. If so, they are called as named managed
+ * instances. In this case, optional name parameter is used in {@link Managed} and {@link Wire}
+ * annotations to linked dependent objects together:
  *
  * <pre>
  *   &#064;Managed(managedInstanceName="This")
@@ -55,6 +56,28 @@ import java.lang.annotation.Target;
  *   }
  * </pre>
  *
+ * Managed instances may have configurations which can be injected to the injection points. To
+ * define configuration injection points, {@link Configurable} annotation is used:
+ * <pre>
+ *   package com.foo;
+ *
+ *   &#064;Managed(managedInstanceName="Bar")
+ *   public class ManagedInstance {
+ *
+ *       &#064;Configurable(name="temp")
+ *       private Integer temp;
+ *
+ *   }
+ * </pre>
+ * <p>
+ * The name of the configuration source is the name of the managed instance, if the managed
+ * instance is a named one, e.g., Foo.properties in the above example, otherwise the package name
+ * plus the class name, e.g, com.foo.ManagedInstance.properties.
+ * </p>
+ * <p>
+ * A managed instance must be a concrete type. The interfaces and abstract classes may not be
+ * managed instance.
+ * </p>
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
