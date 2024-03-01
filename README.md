@@ -7,7 +7,7 @@
 [![Build](https://circleci.com/gh/reevik/mikron.svg?style=shield)](https://opensource.org/licenses/Apache-2.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![JDK](https://img.shields.io/badge/JDK-21%20-green.svg)](https://github.com/reevik/darkest/wiki/Java-Support)
-[![Release](https://img.shields.io/badge/Release-0.3.3%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
+[![Release](https://img.shields.io/badge/Release-0.4.0%20-green.svg)](https://central.sonatype.com/artifact/net.reevik/darkest)
 [![Javadocs](https://img.shields.io/badge/Javadoc%20-green.svg)](https://reevik.github.io/mikron/)
 [![Gitter](https://img.shields.io/badge/Chat-gitter%20-green.svg)](https://matrix.to/#/#mikron:gitter.im)
 </div>
@@ -19,7 +19,7 @@ Mikron is a minimalistic IoC container for dependency injection and externalized
 <dependency>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.3.3</version>
+  <version>${latest}</version>
 </dependency>
 ```
 
