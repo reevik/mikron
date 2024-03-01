@@ -85,9 +85,9 @@ import java.lang.annotation.Target;
 public @interface Managed {
 
   /**
-   * Optional managedInstanceName of the managed instance that can be used in {@link Wire} annotation.
+   * Optional name of the managed instance that can be used in {@link Wire} annotation.
    *
-   * @return The managedInstanceName of the managed instance.
+   * @return The name of the managed instance.
    */
   String name() default "";
 }

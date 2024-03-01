@@ -17,33 +17,22 @@ package net.reevik.mikron.ioc;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
-import net.reevik.mikron.annotation.AnnotationResource;
 import net.reevik.mikron.annotation.Configurable;
-import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.Wire;
 import net.reevik.mikron.configuration.ConfigurationBinding;
-import net.reevik.mikron.configuration.PropertiesRepository;
 import net.reevik.mikron.string.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ManagedInstance {
-
   private final static Logger LOG = LoggerFactory.getLogger(ManagedInstance.class);
-
-  private final AnnotationResource<Managed> annotationResource;
   private final Object instance;
   private final String managedInstanceName;
   private final MikronContext context;
 
-  public ManagedInstance(AnnotationResource<Managed> annotationResource, Object instance,
+  public ManagedInstance(Object instance,
       String managedInstanceName, MikronContext context) {
-    this.annotationResource = annotationResource;
     this.instance = instance;
     this.managedInstanceName = managedInstanceName;
     this.context = context;
@@ -51,86 +40,9 @@ public class ManagedInstance {
 
   public void wire() {
     Arrays.stream(instance.getClass().getDeclaredFields())
-        .filter(field -> field.isAnnotationPresent(Wire.class)).forEach(this::wireDependency);
-  }
-
-  private void wireDependency(Field field) {
-    switch (field.getAnnotation(Wire.class).scope()) {
-      case STATIC -> bindStatic(field);
-      case ACCESS -> bindOnAccess(field);
-    }
-  }
-
-  private void bindStatic(Field field) {
-    try {
-      var wire = field.getAnnotation(Wire.class);
-      var componentNameOnField = getDependencyName(field, wire);
-      var propClassName = getComponentName(componentNameOnField, wire.filter());
-      if (field.trySetAccessible()) {
-        if (context.getManagedInstances().containsKey(propClassName)) {
-          var managedInstance = context.getManagedInstances().get(propClassName);
-          field.set(instance, managedInstance.getInstance());
-        } else {
-          injectFirstAssignable(field);
-        }
-      }
-    } catch (IllegalAccessException e) {
-      LOG.error("Cannot wire the field={} Reason={}", field, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      throw new DependencyWiringException(e);
-    }
-  }
-
-  private void injectFirstAssignable(Field field) throws IllegalAccessException {
-    var type = field.getType();
-    var candidates = context.getManagedInstances()
-        .values().stream()
-        .filter(s -> type.isAssignableFrom(s.instance.getClass()))
-        .toList();
-    if (candidates.size() == 1) {
-      ManagedInstance firstCandidate = candidates.iterator().next();
-      field.set(instance, firstCandidate.getInstance());
-    }
-  }
-
-  private void bindOnAccess(Field field) {
-    try {
-      var type = field.getType();
-      var wire = field.getAnnotation(Wire.class);
-      var componentNameOnField = getDependencyName(field, wire);
-      var propClassName = getComponentName(componentNameOnField, wire.filter());
-      var proxyInstance = Proxy.newProxyInstance(
-          ManagedInstance.class.getClassLoader(),
-          new Class[]{type},
-          new DynamicWiringInvocation(type, context, wire.name(), propClassName));
-      field.setAccessible(true);
-      field.set(instance, proxyInstance);
-    } catch (IllegalAccessException e) {
-      LOG.error("Cannot wire the field={} Reason={}", field, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      throw new DependencyWiringException(e);
-    }
-  }
-
-  private String getComponentName(String classKey, String propertyFilter) {
-    if (Str.isEmpty(propertyFilter)) {
-      return classKey;
-    }
-    var filterArr = propertyFilter.split("=");
-    var filterName = filterArr[0];
-    var filterValue = filterArr[1];
-    var propRepo = context.getPropertiesRepository();
-    return propRepo.getPropertyClassNames().stream()
-        .filter(className -> className.startsWith(classKey))
-        .filter(hasFilteredProperty(filterName, filterValue, propRepo))
-        .findFirst()
-        .orElse(classKey);
-  }
-
-  private Predicate<String> hasFilteredProperty(String filterName, String filterValue,
-      PropertiesRepository propRepo) {
-    return className -> filterValue.equals(propRepo.getConfiguration(className)
-        .map(b -> b.get(filterName)).orElse(null));
+        .filter(field -> field.isAnnotationPresent(Wire.class))
+        .map(field -> new FieldInjectionPoint(instance, field, context))
+        .forEach(FieldInjectionPoint::inject);
   }
 
   public void configSetup() {
@@ -168,15 +80,6 @@ public class ManagedInstance {
     var annotation = field.getAnnotation(Configurable.class);
     var name = annotation.name();
     return Str.isEmpty(name) ? field.getType().getName() : name;
-  }
-
-  private String getDependencyName(Field field, Wire annotation) {
-    var name = annotation.name();
-    return Str.isEmpty(name) ? field.getType().getName() : name;
-  }
-
-  public AnnotationResource<Managed> getAnnotationResource() {
-    return annotationResource;
   }
 
   public Object getInstance() {

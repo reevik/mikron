@@ -31,8 +31,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import net.reevik.mikron.annotation.AnnotationResource;
-import net.reevik.mikron.ioc.MikronContext;
+import net.reevik.mikron.annotation.ManagedDefinition;
 import net.reevik.mikron.string.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,14 +197,14 @@ public class ClasspathResourceRepository {
    *
    * @param annotation Class annotation.
    * @param <T>        The type of annotation.
-   * @return List of {@link AnnotationResource} instances.
+   * @return List of {@link ManagedDefinition} instances.
    */
-  public <T extends Annotation> List<AnnotationResource<T>> findClassesBy(Class<T> annotation) {
-    List<AnnotationResource<T>> results = new ArrayList<>();
+  public <T extends Annotation> List<ManagedDefinition<T>> findClassesBy(Class<T> annotation) {
+    List<ManagedDefinition<T>> results = new ArrayList<>();
     for (final Class<?> clazz : repo) {
       T annotationOnClass = clazz.getAnnotation(annotation);
       if (annotationOnClass != null) {
-        results.add(new AnnotationResource<>(annotationOnClass, clazz));
+        results.add(new ManagedDefinition<>(annotationOnClass, clazz));
       }
     }
     return results;
@@ -233,7 +232,7 @@ public class ClasspathResourceRepository {
   public <T extends Annotation> Set<Class<?>> findImplementingClasses(Class<?> parentType,
       Class<T> annotation) {
     return findClassesBy(annotation).stream()
-        .map(AnnotationResource::clazz)
+        .map(ManagedDefinition::clazz)
         .filter(parentType::isAssignableFrom)
         .collect(Collectors.toSet());
   }
