@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.reevik.mikron.annotation;
+package net.reevik.mikron.test11;
 
-import java.lang.annotation.Annotation;
-import java.util.Objects;
+import net.reevik.mikron.annotation.Managed;
+import net.reevik.mikron.annotation.Prefer;
+import net.reevik.mikron.annotation.Wire;
 
-public record AnnotationResource<T extends Annotation>(T annotation, Class<?> clazz) {
+@Managed
+public class ConstructorInjected2 {
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    AnnotationResource<?> that = (AnnotationResource<?>) o;
-    return Objects.equals(annotation, that.annotation) && Objects.equals(clazz, that.clazz);
+  private final ManagedDependency managedDependency;
+
+  public ConstructorInjected2(@Wire ManagedDependency managedDependency) {
+    this.managedDependency = managedDependency;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(annotation, clazz);
+  @Prefer
+  public ConstructorInjected2() {
+    this.managedDependency = new ManagedDependency();
+  }
+
+  public ManagedDependency getManagedDependency() {
+    return managedDependency;
   }
 }

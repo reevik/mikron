@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
-import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.annotation.ManagedDefinition;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.ioc.ManagedInstance;
@@ -36,7 +36,7 @@ public class DependencyScanTest {
   void testScanAllClasses() {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
-    List<AnnotationResource<Managed>> by = dependencyScan.findClassesBy(Managed.class);
+    List<ManagedDefinition<Managed>> by = dependencyScan.findClassesBy(Managed.class);
     assertThat(by).hasSize(15);
   }
 

@@ -15,17 +15,18 @@
  */
 package net.reevik.mikron.test10;
 
+import net.reevik.mikron.annotation.Dynamic;
 import net.reevik.mikron.annotation.Managed;
-import net.reevik.mikron.annotation.Scope;
 import net.reevik.mikron.annotation.Wire;
 
 @Managed
 public class ManagedInstance {
 
-  @Wire(scope = Scope.ACCESS, name = "ManagedDependency")
+  @Dynamic
+  @Wire(name = "ManagedDependency")
   private IDynamicManagedDependency dynamicManagedDependency;
 
-  @Wire(scope = Scope.STATIC, name = "ManagedDependency")
+  @Wire(name = "ManagedDependency")
   private IDynamicManagedDependency staticBoundDynamicManagedDependencyByName;
 
   @Wire

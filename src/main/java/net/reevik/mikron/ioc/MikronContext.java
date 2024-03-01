@@ -16,19 +16,22 @@
 package net.reevik.mikron.ioc;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import net.reevik.mikron.annotation.AnnotationResource;
+import net.reevik.mikron.annotation.ManagedDefinition;
 import net.reevik.mikron.annotation.CleanUp;
 import net.reevik.mikron.annotation.Configurable;
 import net.reevik.mikron.annotation.Managed;
 import net.reevik.mikron.annotation.ManagedApplication;
 import net.reevik.mikron.annotation.Initialize;
+import net.reevik.mikron.annotation.Prefer;
 import net.reevik.mikron.configuration.PropertiesRepository;
 import net.reevik.mikron.configuration.TypeConverter;
 import net.reevik.mikron.reflection.ClasspathResourceRepository;
@@ -82,7 +85,7 @@ public class MikronContext implements AutoCloseable {
    */
   public void register(Object instance, String name) {
     managedInstances.clear();
-    managedInstances.put(name, new ManagedInstance(null, instance, name, this));
+    managedInstances.put(name, new ManagedInstance(instance, name, this));
     initializeContext();
     initializeConfigurations();
     postConstruct();
@@ -97,7 +100,8 @@ public class MikronContext implements AutoCloseable {
     registerSelf();
     for (var annotationResource : classpathResourceRepository.findClassesBy(Managed.class)) {
       var componentName = getName(annotationResource);
-      var propBasedInstanceCreation = createInstancePerPropertyFile(annotationResource, componentName);
+      var propBasedInstanceCreation = createInstancePerPropertyFile(annotationResource,
+          componentName);
       // It is possible that there is no configuration file at all, so we need to instantiate the
       // component by name.
       if (!propBasedInstanceCreation) {
@@ -107,7 +111,7 @@ public class MikronContext implements AutoCloseable {
     managedInstances.values().forEach(ManagedInstance::wire);
   }
 
-  private boolean createInstancePerPropertyFile(AnnotationResource<Managed> annotationResource,
+  private boolean createInstancePerPropertyFile(ManagedDefinition<Managed> annotationResource,
       String componentName) {
     var propBasedInstanceCreation = false;
     for (var propFile : propertiesRepository.getPropertyClassNames()) {
@@ -121,10 +125,10 @@ public class MikronContext implements AutoCloseable {
 
   private void registerSelf() {
     managedInstances.put(MikronContext.class.getSimpleName(),
-        new ManagedInstance(null, this, MikronContext.class.getSimpleName(), this));
+        new ManagedInstance(this, MikronContext.class.getSimpleName(), this));
   }
 
-  private String getName(AnnotationResource<Managed> annotationResource) {
+  private String getName(ManagedDefinition<Managed> annotationResource) {
     var name = annotationResource.annotation().name();
     if (Str.isEmpty(name)) {
       return annotationResource.clazz().getName();
@@ -133,23 +137,32 @@ public class MikronContext implements AutoCloseable {
   }
 
   private ClasspathResourceRepository initializeClasspath(Class<?> clazz) {
-    final ClasspathResourceRepository classpath;
     final var declaredAnnotation = clazz.getAnnotation(ManagedApplication.class);
     if (declaredAnnotation == null) {
       throw new ApplicationInitializationException(
-          "No managed application found with " + "@ManagedApplication annotation.");
+          "No managed application found with @ManagedApplication annotation.");
     }
-    classpath = ClasspathResourceRepository.of(declaredAnnotation.packages());
-    return classpath;
+    return ClasspathResourceRepository.of(declaredAnnotation.packages());
   }
 
-  private ManagedInstance initObject(AnnotationResource<Managed> annotationResource, String name) {
+  private ManagedInstance initObject(ManagedDefinition<Managed> annotationResource, String name) {
+    Class<?> managedDefiningClass = annotationResource.clazz();
+    Constructor<?>[] constructors = managedDefiningClass.getConstructors();
+    return Arrays.stream(constructors)
+        .filter(constructor -> constructor.isAnnotationPresent(Prefer.class))
+        .findFirst()
+        .map(constructor -> new ConstructorInjectionPoint<>(constructor, this).inject())
+        .map(managedInstance -> new ManagedInstance(managedInstance, name, this))
+        .orElseGet(() -> instantiateByDefault(annotationResource, name));
+  }
+
+  private ManagedInstance instantiateByDefault(ManagedDefinition<Managed> annotationResource,
+      String name) {
     try {
       var clazz = annotationResource.clazz();
       var constructor = clazz.getConstructor();
-      return new ManagedInstance(annotationResource, constructor.newInstance(), name, this);
-    } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-             NoSuchMethodException e) {
+      return new ManagedInstance(constructor.newInstance(), name, this);
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -184,10 +197,8 @@ public class MikronContext implements AutoCloseable {
       } else {
         managedType = targetType;
       }
-      var managedAnnotation = managedType.getAnnotation(Managed.class);
-      var annotationResource = new AnnotationResource<>(managedAnnotation, managedType);
       var constructor = managedType.getConstructor();
-      return new ManagedInstance(annotationResource, constructor.newInstance(), targetName, this);
+      return new ManagedInstance(constructor.newInstance(), targetName, this);
 
     } catch (Exception e) {
       throw new RuntimeException(e);

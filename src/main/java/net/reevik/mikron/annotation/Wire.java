@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 public @interface Wire {
 
   /**
@@ -55,5 +55,5 @@ public @interface Wire {
    *
    * @return Dependency injection scope.
    */
-  Scope scope() default Scope.STATIC;
+  // Scope scope() default Scope.STATIC;
 }
