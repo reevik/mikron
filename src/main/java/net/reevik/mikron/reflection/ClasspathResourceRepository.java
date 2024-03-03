@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.reevik.mikron.annotation.ManagedDefinition;
 import net.reevik.mikron.string.Str;
@@ -77,7 +79,11 @@ public class ClasspathResourceRepository {
   }
 
   private void checkPackageName(String packageName) {
-    // Not yet implemented.
+    Pattern p = Pattern.compile("^(\\.\\*)|([_a-zA-Z][\\w]+)(\\.[_a-zA-Z][\\w]+)*(\\.\\*)?$");
+    Matcher m = p.matcher(packageName);
+    if (!m.matches()) {
+      throw new IllegalArgumentException(packageName + " looks invalid package syntax.");
+    }
   }
 
   private String getPackageToDirectory(String packageName) {

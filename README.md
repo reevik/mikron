@@ -24,7 +24,7 @@ Mikron is a minimalistic web-free IoC container for dependency injection and ext
 
 ## Usage
 
-You will use Mikron annotations to initialize the Mikron context in your Java application. In the following example, we declare a "Mikron Application" by using `@ManagedApplication` annotation, and instantiate the Mikron context. MikronContext is the IoC implementation where managed instances reside:
+You will use Mikron annotations to initialize the Mikron context in your Java application. In the following example, we declare a "Mikron Application" by using `@ManagedApplication` annotation, and instantiate the Mikron context. MikronContext is the implementation of IoC container, where managed instances reside:
 
 ```java
 @ManagedApplication(packages = {"your.package.to.scan"})
