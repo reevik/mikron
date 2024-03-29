@@ -32,7 +32,7 @@ public class Main {
 
   public static void main(String[] args) {
     Optional<AnnotatedManagedClass> instance;
-    try (MikronContext context = MikronContext.init(MikronContextTest.class)) {
+    try (MikronContext context = MikronContext.init(Main.class)) {
       instance = context.getInstance(AnnotatedManagedClass.class.getName());
     } catch (Exception e) {
       throw new RuntimeException(e);
