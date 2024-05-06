@@ -48,8 +48,7 @@ import org.slf4j.LoggerFactory;
  * @author Erhan Bagdemir
  */
 public class MikronContext implements AutoCloseable {
-
-  private final static Logger LOG = LoggerFactory.getLogger(MikronContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MikronContext.class);
 
   /**
    * The cache for the managed instances.

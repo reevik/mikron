@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ManagedInstance {
-  private final static Logger LOG = LoggerFactory.getLogger(ManagedInstance.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ManagedInstance.class);
   private final Object instance;
   private final String managedInstanceName;
   private final MikronContext context;
