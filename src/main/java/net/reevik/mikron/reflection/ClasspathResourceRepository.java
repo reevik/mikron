@@ -180,7 +180,7 @@ public class ClasspathResourceRepository {
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     } catch (NoClassDefFoundError e) {
-      LOG.warn("Cannot load the class file: " + classPath, e);
+      LOG.warn("Cannot load the class file: " + classPath);
     }
     return Optional.empty();
   }
@@ -216,34 +216,11 @@ public class ClasspathResourceRepository {
     return results;
   }
 
-  /**
-   * Find annotated classes with annotated fields.
-   *
-   * @param fieldAnnotation Annotation type for fields.
-   * @param classAnnotation Annotation type for classes.
-   * @param <T>             Field annotation type.
-   * @param <R>             Class annotation type.
-   * @return List of fields annotated with field annotation.
-   */
-  public <T extends Annotation, R extends Annotation> List<Field> findClassesWithFields(
-      final Class<T> fieldAnnotation,
-      final Class<R> classAnnotation) {
-    return findClassesBy(classAnnotation)
-        .stream()
-        .flatMap(m -> Arrays.stream(m.clazz().getFields())
-            .filter(field -> field.isAnnotationPresent(fieldAnnotation)))
-        .toList();
-  }
-
   public <T extends Annotation> Set<Class<?>> findImplementingClasses(Class<?> parentType,
       Class<T> annotation) {
     return findClassesBy(annotation).stream()
         .map(ManagedDefinition::clazz)
         .filter(parentType::isAssignableFrom)
         .collect(Collectors.toSet());
-  }
-
-  record ClassFile(String packageName, String classFileName) {
-
   }
 }
