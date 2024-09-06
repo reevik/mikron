@@ -24,7 +24,7 @@ Mikron is a minimalistic web-free IoC container for dependency injection and ext
 
 ## Usage
 
-You will use Mikron annotations to initialize the Mikron context in your Java application. In the following example, we declare a "Mikron Application" by using `@ManagedApplication` annotation, and instantiate the Mikron context. MikronContext is the implementation of IoC container, where managed instances reside:
+You will use Mikron annotations to initialize the Mikron context in your Java application. In the following example, we declare a "Mikron Application" by using [@ManagedApplication](https://reevik.github.io/mikron/net/reevik/mikron/annotation/ManagedApplication.html) annotation, and instantiate the Mikron context. MikronContext is the implementation of IoC container, where managed instances reside:
 
 ```java
 @ManagedApplication(packages = {"your.package.to.scan"})
@@ -41,7 +41,7 @@ public class Main {
 }
 ```
 
-Mikron context is the container where the managed instances reside and the dependencies between managed objects get wired. You will use `@Managed` annotation to declare managed instances:
+Mikron context is the container where the managed instances reside and the dependencies between managed objects get wired. You will use [@Managed](https://reevik.github.io/mikron/net/reevik/mikron/annotation/Managed.html) annotation to declare managed instances:
 
 ```java
 @Managed
@@ -55,7 +55,7 @@ public class ManagedObject {
 }
 ```
 
-and the `@Wire` annotation introduces dependency injection point whereas `@Configurable` annotation is used to inject externalized configurations. 
+and the [@Wire](https://reevik.github.io/mikron/net/reevik/mikron/annotation/Wire.html) annotation introduces dependency injection point whereas [@Configurable](https://reevik.github.io/mikron/net/reevik/mikron/annotation/Configurable.html) annotation is used to inject externalized configurations. 
 
 ## Documentation
 
