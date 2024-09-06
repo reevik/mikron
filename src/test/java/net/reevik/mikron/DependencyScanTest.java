@@ -37,7 +37,7 @@ public class DependencyScanTest {
     ClasspathResourceRepository dependencyScan = ClasspathResourceRepository.of(
         ClasspathResourceRepository.SCAN_ALL);
     List<ManagedDefinition<Managed>> by = dependencyScan.findClassesBy(Managed.class);
-    assertThat(by).hasSize(18);
+    assertThat(by).hasSize(20);
   }
 
   @Test

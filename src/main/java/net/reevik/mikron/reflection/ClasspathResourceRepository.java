@@ -180,7 +180,7 @@ public class ClasspathResourceRepository {
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     } catch (NoClassDefFoundError e) {
-      LOG.warn("Cannot load the class file: " + classPath, e);
+      LOG.warn("Cannot load the class file: " + classPath);
     }
     return Optional.empty();
   }
