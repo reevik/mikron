@@ -87,7 +87,7 @@ public class MikronContext implements AutoCloseable {
     managedInstances.put(name, new ManagedInstance(instance, name, this));
     initializeContext();
     initializeConfigurations();
-    postConstruct();
+    postConstructAll();
   }
 
   private void initializeConfigurations() {
@@ -160,7 +160,9 @@ public class MikronContext implements AutoCloseable {
     try {
       var clazz = annotationResource.clazz();
       var constructor = clazz.getConstructor();
-      return new ManagedInstance(constructor.newInstance(), name, this);
+      var managedInstance = new ManagedInstance(constructor.newInstance(), name, this);
+      executeIfAnnotated(Initialize.class, managedInstance);
+      return managedInstance;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -181,7 +183,7 @@ public class MikronContext implements AutoCloseable {
           managedType = implementingManagedInstances.iterator().next();
         }
 
-        if (implementingManagedInstances.size() >= 1 && Str.isNotEmpty(targetName)) {
+        if (!implementingManagedInstances.isEmpty() && Str.isNotEmpty(targetName)) {
           Optional<Class<?>> matchingNamedManagedInstance =
               implementingManagedInstances.stream().filter(managedClass ->
                   targetName.equals(managedClass.getAnnotation(Managed.class).name())).findFirst();
@@ -224,29 +226,31 @@ public class MikronContext implements AutoCloseable {
     return propertiesRepository.getConfiguration(configurationSourceKey);
   }
 
-  private void postConstruct() {
+  private void postConstructAll() {
     executeIfAnnotated(Initialize.class);
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     executeIfAnnotated(CleanUp.class);
   }
 
   private void executeIfAnnotated(Class<? extends Annotation> annotation) {
-    for (var managedInstance : managedInstances.values()) {
-      Class<?> aClass = managedInstance.getInstance().getClass();
-      for (Method declaredMethod : aClass.getDeclaredMethods()) {
-        if (declaredMethod.isAnnotationPresent(annotation)) {
-          try {
-            if (declaredMethod.getParameterCount() > 0) {
-              throw new IllegalArgumentException(
-                  "@Initialize/@CleanUp methods shouldn't take " + "parameters.");
-            }
-            declaredMethod.invoke(managedInstance.getInstance());
-          } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+      managedInstances.values().forEach(managedInstance -> executeIfAnnotated(annotation, managedInstance));
+  }
+
+  private void executeIfAnnotated(Class<? extends Annotation> annotation, ManagedInstance managedInstance) {
+    Class<?> aClass = managedInstance.getInstance().getClass();
+    for (Method declaredMethod : aClass.getDeclaredMethods()) {
+      if (declaredMethod.isAnnotationPresent(annotation)) {
+        try {
+          if (declaredMethod.getParameterCount() > 0) {
+            throw new IllegalArgumentException(
+                "@Initialize/@CleanUp methods shouldn't take " + "parameters.");
           }
+          declaredMethod.invoke(managedInstance.getInstance());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+          throw new RuntimeException(e);
         }
       }
     }
