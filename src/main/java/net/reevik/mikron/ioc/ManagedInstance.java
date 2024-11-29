@@ -28,13 +28,12 @@ import org.slf4j.LoggerFactory;
 public class ManagedInstance {
   private static final Logger LOG = LoggerFactory.getLogger(ManagedInstance.class);
   private final Object instance;
-  private final String managedInstanceName;
+  private final String instanceName;
   private final MikronContext context;
 
-  public ManagedInstance(Object instance,
-      String managedInstanceName, MikronContext context) {
+  public ManagedInstance(Object instance, String managedInstanceName, MikronContext context) {
     this.instance = instance;
-    this.managedInstanceName = managedInstanceName;
+    this.instanceName = managedInstanceName;
     this.context = context;
   }
 
@@ -46,7 +45,7 @@ public class ManagedInstance {
   }
 
   public void configSetup() {
-    configSetup(managedInstanceName);
+    configSetup(instanceName);
   }
 
   public void configSetup(String configurationSourceKey) {
@@ -86,7 +85,7 @@ public class ManagedInstance {
     return instance;
   }
 
-  public String getManagedInstanceName() {
-    return managedInstanceName;
+  public String getInstanceName() {
+    return instanceName;
   }
 }

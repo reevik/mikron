@@ -86,6 +86,7 @@ public class MikronContext implements AutoCloseable {
     managedInstances.clear();
     managedInstances.put(name, new ManagedInstance(instance, name, this));
     initializeContext();
+    initializeWiring();
     initializeConfigurations();
     postConstructAll();
   }
@@ -99,19 +100,20 @@ public class MikronContext implements AutoCloseable {
     registerSelf();
     for (var annotationResource : classpathResourceRepository.findClassesBy(Managed.class)) {
       var componentName = getName(annotationResource);
-      var propBasedInstanceCreation = createInstancePerPropertyFile(annotationResource,
-          componentName);
+      var propBasedInstanceCreation = createInstanceByPropertyFile(annotationResource, componentName);
       // It is possible that there is no configuration file at all, so we need to instantiate the
       // component by name.
       if (!propBasedInstanceCreation) {
         managedInstances.put(componentName, initObject(annotationResource, componentName));
       }
     }
+  }
+
+  private void initializeWiring() {
     managedInstances.values().forEach(ManagedInstance::wire);
   }
 
-  private boolean createInstancePerPropertyFile(ManagedDefinition<Managed> annotationResource,
-      String componentName) {
+  private boolean createInstanceByPropertyFile(ManagedDefinition<Managed> annotationResource, String componentName) {
     var propBasedInstanceCreation = false;
     for (var propFile : propertiesRepository.getPropertyClassNames()) {
       if (propFile.startsWith(componentName) && !managedInstances.containsKey(propFile)) {
@@ -160,9 +162,7 @@ public class MikronContext implements AutoCloseable {
     try {
       var clazz = annotationResource.clazz();
       var constructor = clazz.getConstructor();
-      var managedInstance = new ManagedInstance(constructor.newInstance(), name, this);
-      executeIfAnnotated(Initialize.class, managedInstance);
-      return managedInstance;
+        return new ManagedInstance(constructor.newInstance(), name, this);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
