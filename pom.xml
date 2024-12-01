@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.4.0-SNAPSHOT</version>
+  <version>0.5.0-SNAPSHOT</version>
   <url>https://github.com/reevik/mikron.git</url>
   <name>mikron</name>
   <description>Mikron is a minimalist Java library for Dependency Injection.</description>
@@ -150,12 +150,10 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <version>5.10.1</version>
     </dependency>
-
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>3.24.2</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -170,9 +168,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>5.10.0</version>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+      <version>5.4.0</version>
     </dependency>
   </dependencies>
 

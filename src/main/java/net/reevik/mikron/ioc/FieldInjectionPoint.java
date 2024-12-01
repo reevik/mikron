@@ -30,13 +30,11 @@ public class FieldInjectionPoint implements InjectionPoint {
   private final static Logger LOG = LoggerFactory.getLogger(FieldInjectionPoint.class);
 
   private final Field field;
-  private final Wire annotation;
   private final MikronContext context;
   private final Object self;
 
   public FieldInjectionPoint(Object self, Field field, MikronContext context) {
     this.field = field;
-    this.annotation = field.getAnnotation(Wire.class);
     this.context = context;
     this.self = self;
   }
@@ -45,15 +43,16 @@ public class FieldInjectionPoint implements InjectionPoint {
   public Object inject() {
     if (field.isAnnotationPresent(Dynamic.class)) {
       dynamicWiring();
-      return self;
+    } else {
+      staticWiring();
     }
-    staticWiring();
     return self;
   }
 
   private void staticWiring() {
     try {
-      var propClassName = getComponentName();
+      var componentNameResolver = new ComponentNameResolver(field, context);
+      var propClassName = componentNameResolver.getComponentName();
       if (field.trySetAccessible()) {
         if (context.getManagedInstances().containsKey(propClassName)) {
           var managedInstance = context.getManagedInstances().get(propClassName);
@@ -69,9 +68,10 @@ public class FieldInjectionPoint implements InjectionPoint {
 
   private void dynamicWiring() {
     try {
+      var componentNameResolver = new ComponentNameResolver(field, context);
       var type = field.getType();
       var wire = field.getAnnotation(Wire.class);
-      var propClassName = getComponentName();
+      var propClassName = componentNameResolver.getComponentName();
       var proxyInstance = Proxy.newProxyInstance(
           ManagedInstance.class.getClassLoader(),
           new Class[]{type},
@@ -101,34 +101,5 @@ public class FieldInjectionPoint implements InjectionPoint {
       ManagedInstance firstCandidate = candidates.iterator().next();
       field.set(self, firstCandidate.getInstance());
     }
-  }
-
-  private String getComponentName() {
-    var classKey = getDependencyName();
-    var propertyFilter = annotation.filter();
-    if (Str.isEmpty(propertyFilter)) {
-      return classKey;
-    }
-    var filterArr = propertyFilter.split("=");
-    var filterName = filterArr[0];
-    var filterValue = filterArr[1];
-    var propRepo = context.getPropertiesRepository();
-    return propRepo.getPropertyClassNames().stream()
-        .filter(className -> className.startsWith(classKey))
-        .filter(hasFilteredProperty(filterName, filterValue, propRepo))
-        .findFirst()
-        .orElse(classKey);
-  }
-
-  private Predicate<String> hasFilteredProperty(String filterName, String filterValue,
-      PropertiesRepository propRepo) {
-    return className -> filterValue.equals(propRepo.getConfiguration(className)
-        .map(b -> b.get(filterName))
-        .orElse(null));
-  }
-
-  private String getDependencyName() {
-    var name = annotation.name();
-    return Str.isEmpty(name) ? field.getType().getName() : name;
   }
 }

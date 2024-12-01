@@ -17,24 +17,25 @@ package net.reevik.mikron.configuration;
 
 import java.lang.reflect.Field;
 
+/**
+ * Injects the externalized configurations into the injection points.
+ */
 public class ConfigurationBinding implements IConfigurationBinding {
 
   @Override
   public void bind(Field managedField, Object managedInstance, Object configValue) {
     try {
-      if (configValue == null) {
-        return;
-      }
-      managedField.setAccessible(true);
-      if (managedField.getType().isAssignableFrom(configValue.getClass())) {
-        managedField.set(managedInstance, configValue);
-      } else {
-
-        final var type = managedField.getType();
-        if (type.isAssignableFrom(configValue.getClass())) {
-          managedField.set(managedInstance, Integer.parseInt((String) configValue));
-        } else {
+      if (configValue != null) {
+        managedField.setAccessible(true);
+        if (managedField.getType().isAssignableFrom(configValue.getClass())) {
           managedField.set(managedInstance, configValue);
+        } else {
+          var type = managedField.getType();
+          if (type.isAssignableFrom(configValue.getClass())) {
+            managedField.set(managedInstance, Integer.parseInt((String) configValue));
+          } else {
+            managedField.set(managedInstance, configValue);
+          }
         }
       }
     } catch (IllegalAccessException e) {
