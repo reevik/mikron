@@ -128,6 +128,9 @@ public class MikronContext implements AutoCloseable {
                 }
             }
         }
+        if (managedInstances.containsKey(managedFactory.name())) {
+            return;
+        }
         var object = managedFactory.supplier().get();
         var managedInstance = new ManagedInstance(object, managedFactory.name(), this);
         managedInstance.configSetup();
