@@ -48,7 +48,7 @@
   </licenses>
   <profiles>
     <profile>
-      <id>ossrh</id>
+      <id>central</id>
       <activation>
         <property>
           <name>performRelease</name>
