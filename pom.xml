@@ -13,11 +13,6 @@
       <name>OSSRH Release Repository</name>
       <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <name>OSSRH Snapshot Repository</name>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-    </snapshotRepository>
   </distributionManagement>
   <scm>
     <connection>scm:git:git@github.com:reevik/mikron.git</connection>
