@@ -8,13 +8,9 @@
   <name>mikron</name>
   <description>Mikron is a minimalist Java library for Dependency Injection.</description>
   <distributionManagement>
-    <snapshotRepository>
-      <id>central</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <repository>
       <id>central</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <url>https://central.sonatype.com</url>
     </repository>
   </distributionManagement>
   <scm>
@@ -78,6 +74,7 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
+              <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
             </configuration>
           </plugin>
           <plugin>
