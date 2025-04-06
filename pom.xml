@@ -79,8 +79,7 @@
             <version>0.7.0</version>
             <extensions>true</extensions>
             <configuration>
-              <publishingServerId>central</publishingServerId>
-              <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
+              <publishingServerId>ossrh</publishingServerId>
             </configuration>
           </plugin>
           <plugin>
