@@ -80,6 +80,7 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
+              <centralBaseUrl>https://s01.oss.sonatype.org</centralBaseUrl>
             </configuration>
           </plugin>
           <plugin>
