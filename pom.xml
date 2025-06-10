@@ -3,11 +3,23 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.6.1-SNAPSHOT</version>
+  <version>0.6.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <url>https://github.com/reevik/mikron.git</url>
   <name>mikron</name>
   <description>Mikron is a minimalist Java library for Dependency Injection.</description>
+  <distributionManagement>
+    <repository>
+      <id>central</id>
+      <name>OSSRH Release Repository</name>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>central</id>
+      <name>OSSRH Snapshot Repository</name>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
   <scm>
     <connection>scm:git:git@github.com:reevik/mikron.git</connection>
     <developerConnection>scm:git:git@github.com:reevik/mikron.git</developerConnection>
@@ -38,6 +50,12 @@
   <profiles>
     <profile>
       <id>central</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -81,15 +99,6 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.7.0</version>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>central</publishingServerId>
-            </configuration>
           </plugin>
         </plugins>
       </build>
