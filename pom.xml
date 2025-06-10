@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.reevik</groupId>
   <artifactId>mikron</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <url>https://github.com/reevik/mikron.git</url>
   <name>mikron</name>
@@ -24,7 +24,7 @@
     <connection>scm:git:git@github.com:reevik/mikron.git</connection>
     <developerConnection>scm:git:git@github.com:reevik/mikron.git</developerConnection>
     <url>${project.url}</url>
-    <tag>mikron-0.6.0</tag>
+    <tag>mikron-0.1.0</tag>
   </scm>
   <developers>
     <developer>
