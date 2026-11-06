@@ -82,6 +82,16 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <!-- Your GPG key ID here (usually 8 or 16 hex digits) -->
+                            <keyname>6B2ADCEA20EDAD4BCA47990516E1A303FAF41C97</keyname>
+
+                            <!-- Optional: specify gpg executable if needed -->
+                            <!-- <gpgExecutable>gpg</gpgExecutable> -->
+
+                            <!-- Optional: if you use a passphrase, configure it here or in settings.xml -->
+                            <!-- <passphrase>${gpg.passphrase}</passphrase> -->
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -123,7 +133,6 @@
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
                 <version>0.7.0</version>
-                <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                 </configuration>
