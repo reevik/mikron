@@ -1,5 +1,5 @@
 <p align="center">
-<img src="wiki/mikron-logo.png" width=150 />    
+<img src="wiki/logo_mikron.png" />    
 </p>
 
 <div align="center">

@@ -53,6 +53,8 @@ public class ClasspathResourceRepository {
   private static final String PROTOCOL_FILE = "file";
   private static final String PROTOCOL_JAR = "jar";
   public static final String CLASS_EXT = ".class";
+  private static final String MODULE_INFO = "module-info" + CLASS_EXT;
+  private static final String PACKAGE_INFO = "package-info" + CLASS_EXT;
 
   private final List<Class<?>> repo = Collections.synchronizedList(new ArrayList<>());
 
@@ -118,7 +120,7 @@ public class ClasspathResourceRepository {
             while (entries.hasMoreElements()) {
               var entry = entries.nextElement();
               var entryName = entry.getName();
-              if (entryName.endsWith(".class")) {
+              if (isClassFile(entryName)) {
                 loadClass(entryName, classLoader).ifPresent(repo::add);
               }
             }
@@ -152,16 +154,7 @@ public class ClasspathResourceRepository {
     }
 
     final var newBaseDir = getNewBaseDir(file, baseDir);
-    Arrays.stream(files).forEach(child -> {
-      if (child.isDirectory()) {
-        process(child, newBaseDir, classLoader, true);
-      } else {
-        Class<?> clazz = loadClass(child, newBaseDir, classLoader);
-        if (!repo.contains(clazz)) {
-          repo.add(clazz);
-        }
-      }
-    });
+    Arrays.stream(files).forEach(child -> process(child, newBaseDir, classLoader, true));
   }
 
   private String getNewBaseDir(File file, String baseDir) {
@@ -195,7 +188,21 @@ public class ClasspathResourceRepository {
   }
 
   private boolean isClassFile(File parent) {
-    return parent.getName().endsWith(CLASS_EXT);
+    return isClassFile(parent.getName());
+  }
+
+  /**
+   * Checks whether the path denotes a regular class file. Descriptor files like
+   * {@code module-info.class} and {@code package-info.class} are not treated as classes.
+   *
+   * @param path File name or JAR entry path.
+   * @return true if the path is a regular class file.
+   */
+  private boolean isClassFile(String path) {
+    var fileName = path.substring(path.lastIndexOf('/') + 1);
+    return fileName.endsWith(CLASS_EXT)
+        && !fileName.equals(MODULE_INFO)
+        && !fileName.equals(PACKAGE_INFO);
   }
 
   /**
